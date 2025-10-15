@@ -1,0 +1,28 @@
+import chess.engine
+import chess.pgn
+
+STOCKFISH_PATH = "/usr/bin/stockfish"  # change this for your pc
+
+engine = chess.engine.SimpleEngine.popen_uci(STOCKFISH_PATH)
+
+with open("saved_game.pgn") as f:
+    game = chess.pgn.read_game(f)
+
+if game is None:
+    raise Exception("Invalid game")
+
+board = game.board()
+evaluations = []
+
+for move in game.mainline_moves():
+    board.push(move)
+    info = engine.analyse(board, chess.engine.Limit(depth=15))
+    score = info["score"].white().score(mate_score=100000)
+    print(move, info["score"]) # print stockfish analysed score for each move
+    evaluations.append(score)
+
+engine.quit()
+
+avg_score = sum(evaluations) / len(evaluations)
+print(f"avg score: {avg_score}") # print average score for the whole match
+# i think we can calculate rankings based around this

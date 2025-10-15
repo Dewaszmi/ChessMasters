@@ -3,6 +3,7 @@ import tkinter as tk
 from tkinter import messagebox, simpledialog
 
 import chess
+import chess.pgn
 
 UNICODE_PIECES = {
     chess.PAWN: ("♙", "♟"),
@@ -30,14 +31,22 @@ class ChessGUI:
     def setup_ui(self):
         top = tk.Frame(self.root)
         top.pack(side=tk.TOP, fill=tk.X)
-        modes = ["Human vs Human", "Human vs Computer (White)", "Human vs Computer (Black)"]
+        modes = [
+            "Human vs Human",
+            "Human vs Computer (White)",
+            "Human vs Computer (Black)",
+        ]
         for m in modes:
-            tk.Radiobutton(top, text=m, variable=self.mode, value=m, command=self.new_game).pack(side=tk.LEFT)
+            tk.Radiobutton(
+                top, text=m, variable=self.mode, value=m, command=self.new_game
+            ).pack(side=tk.LEFT)
         tk.Button(top, text="New Game", command=self.new_game).pack(side=tk.LEFT)
         tk.Button(top, text="Undo", command=self.undo).pack(side=tk.LEFT)
         tk.Button(top, text="Flip Board", command=self.flip_board).pack(side=tk.LEFT)
         tk.Label(top, text="AI depth:").pack(side=tk.LEFT)
-        tk.Spinbox(top, from_=1, to=3, width=3, textvariable=self.ai_level).pack(side=tk.LEFT)
+        tk.Spinbox(top, from_=1, to=3, width=3, textvariable=self.ai_level).pack(
+            side=tk.LEFT
+        )
         board_frame = tk.Frame(self.root)
         board_frame.pack(side=tk.LEFT)
         for r in range(8):
@@ -114,7 +123,12 @@ class ChessGUI:
         return False
 
     def ask_promotion(self):
-        choices = {"q": chess.QUEEN, "r": chess.ROOK, "b": chess.BISHOP, "n": chess.KNIGHT}
+        choices = {
+            "q": chess.QUEEN,
+            "r": chess.ROOK,
+            "b": chess.BISHOP,
+            "n": chess.KNIGHT,
+        }
         ans = simpledialog.askstring("Promotion", "Choose promotion piece: q(r, b, n)")
         if not ans:
             return None
@@ -140,7 +154,9 @@ class ChessGUI:
                 bg = "#eeeedd" if (r + c) % 2 == 0 else "#769656"
                 btn.config(text="", bg=bg, fg="black")
                 if piece:
-                    sym = UNICODE_PIECES[piece.piece_type][0 if piece.color == chess.WHITE else 1]
+                    sym = UNICODE_PIECES[piece.piece_type][
+                        0 if piece.color == chess.WHITE else 1
+                    ]
                     btn.config(text=sym)
         if self.board.is_check():
             king_sq = self.board.king(self.board.turn)
@@ -175,8 +191,23 @@ class ChessGUI:
                 reason = "Stalemate"
             elif self.board.is_insufficient_material():
                 reason = "Insufficient material"
+
+            game = chess.pgn.Game()
+            game.headers["Event"] = "Python Chess"
+            game.headers["Result"] = res
+
+            node = game
+            temp_board = chess.Board()
+            for move in self.board.move_stack:
+                node = node.add_variation(move)
+                temp_board.push(move)
+
+            with open("saved_game.pgn", "w") as f:
+                print(game, file=f)
+
             messagebox.showinfo("Game Over", f"Result: {res} ({reason})")
             return
+
         if not self.is_human_turn():
             self.root.after(200, self.make_ai_move)
 
@@ -223,7 +254,14 @@ class ChessGUI:
         return random.choice(moves)
 
     def evaluate(self):
-        vals = {chess.PAWN: 1, chess.KNIGHT: 3, chess.BISHOP: 3, chess.ROOK: 5, chess.QUEEN: 9, chess.KING: 0}
+        vals = {
+            chess.PAWN: 1,
+            chess.KNIGHT: 3,
+            chess.BISHOP: 3,
+            chess.ROOK: 5,
+            chess.QUEEN: 9,
+            chess.KING: 0,
+        }
         s = 0
         for sq in chess.SQUARES:
             p = self.board.piece_at(sq)
