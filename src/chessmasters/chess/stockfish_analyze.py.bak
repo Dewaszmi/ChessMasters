@@ -1,3 +1,5 @@
+# might be useful later idk
+
 import chess.engine
 import chess.pgn
 
@@ -18,11 +20,11 @@ for move in game.mainline_moves():
     board.push(move)
     info = engine.analyse(board, chess.engine.Limit(depth=15))
     score = info["score"].white().score(mate_score=100000)
-    print(move, info["score"]) # print stockfish analysed score for each move
+    print(move, info["score"])  # print stockfish analysed score for each move
     evaluations.append(score)
 
 engine.quit()
 
 avg_score = sum(evaluations) / len(evaluations)
-print(f"avg score: {avg_score}") # print average score for the whole match
+print(f"avg score: {avg_score}")  # print average score for the whole match
 # i think we can calculate rankings based around this

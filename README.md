@@ -5,8 +5,15 @@
 ```bash
 pip install -r requirements
 ```
-you also need to install stockfish on your pc, after that in the src/chessmasters/chess-gui.py file set the path to your Stockfish executable (hardcoding for now)
 
-python src/chessmasters/chess_gui.py to run the app (gui template, able to play against human and bot)
+### Testing
 
-python src/chessmasters/stockfish_analyze.py to print stockfish info about the saved game
+To run the program:
+
+```bash
+python -m src.chessmasters.chess.chess_gui
+```
+
+select "Load Training CSV" and the .csv file (train or test).
+
+CSV files taken from https://www.kaggle.com/datasets/ancientaxe/mate-in-one-chess/data?select=train.csv

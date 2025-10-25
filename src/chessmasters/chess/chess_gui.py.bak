@@ -1,9 +1,13 @@
+# working chess gui with ai opponent, might or might not come useful later
+
 import random
 import tkinter as tk
 from tkinter import messagebox, simpledialog
 
 import chess
 import chess.pgn
+
+from src.chessmasters.chess.fen_loader import parse_fen_csv
 
 UNICODE_PIECES = {
     chess.PAWN: ("♙", "♟"),
@@ -25,8 +29,26 @@ class ChessGUI:
         self.mode = tk.StringVar(value="Human vs Human")
         self.ai_level = tk.IntVar(value=1)
         self.move_list = tk.Listbox(self.root, width=30)
+        self.training_data = None
+        self.training_index = 0
+        self.current_best_move = None
         self.setup_ui()
         self.update_board()
+
+    def load_training_csv(self):
+        data = parse_fen_csv()
+        if not data:
+            return
+        self.training_data = data
+        # Start from first position
+        self.training_index = 0
+        fen, best_move = self.training_data[self.training_index]
+        self.board.set_fen(fen)
+        self.current_best_move = best_move
+
+        self.selected = None
+        self.update_board()
+        messagebox.showinfo("Training", f"Training mode started!\nBest move for this position is hidden.")
 
     def setup_ui(self):
         top = tk.Frame(self.root)
@@ -37,16 +59,13 @@ class ChessGUI:
             "Human vs Computer (Black)",
         ]
         for m in modes:
-            tk.Radiobutton(
-                top, text=m, variable=self.mode, value=m, command=self.new_game
-            ).pack(side=tk.LEFT)
+            tk.Radiobutton(top, text=m, variable=self.mode, value=m, command=self.new_game).pack(side=tk.LEFT)
         tk.Button(top, text="New Game", command=self.new_game).pack(side=tk.LEFT)
         tk.Button(top, text="Undo", command=self.undo).pack(side=tk.LEFT)
         tk.Button(top, text="Flip Board", command=self.flip_board).pack(side=tk.LEFT)
+        tk.Button(top, text="Load Training CSV", command=self.load_training_csv).pack(side=tk.LEFT)
         tk.Label(top, text="AI depth:").pack(side=tk.LEFT)
-        tk.Spinbox(top, from_=1, to=3, width=3, textvariable=self.ai_level).pack(
-            side=tk.LEFT
-        )
+        tk.Spinbox(top, from_=1, to=3, width=3, textvariable=self.ai_level).pack(side=tk.LEFT)
         board_frame = tk.Frame(self.root)
         board_frame.pack(side=tk.LEFT)
         for r in range(8):
@@ -103,6 +122,25 @@ class ChessGUI:
                         return
                     move.promotion = promo
                 self.board.push(move)
+                if self.training_data and self.current_best_move:
+                    user_move = move.uci()
+                    if user_move == self.current_best_move:
+                        messagebox.showinfo("Result", "CORRECT move!")
+                    else:
+                        messagebox.showinfo("Result", f"INCORRECT (best was {self.current_best_move})")
+
+                    # Advance to the next exercise
+                    if self.training_data:
+                        self.training_index += 1
+                        if self.training_index < len(self.training_data):
+                            fen, best_move = self.training_data[self.training_index]
+                            self.board.set_fen(fen)
+                            self.current_best_move = best_move
+                            self.update_board()
+                        else:
+                            messagebox.showinfo("Training", "All positions completed!")
+                            self.training_data = None
+
                 self.selected = None
                 self.record_move()
                 self.update_board()
@@ -154,9 +192,7 @@ class ChessGUI:
                 bg = "#eeeedd" if (r + c) % 2 == 0 else "#769656"
                 btn.config(text="", bg=bg, fg="black")
                 if piece:
-                    sym = UNICODE_PIECES[piece.piece_type][
-                        0 if piece.color == chess.WHITE else 1
-                    ]
+                    sym = UNICODE_PIECES[piece.piece_type][0 if piece.color == chess.WHITE else 1]
                     btn.config(text=sym)
         if self.board.is_check():
             king_sq = self.board.king(self.board.turn)
