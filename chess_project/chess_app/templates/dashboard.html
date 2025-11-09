@@ -1,0 +1,35 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>ChessMasters – Szachownica</title>
+
+    <link rel="stylesheet" href="{% static 'chess_app/lib/chessboard.css' %}">
+    <script src="{% static 'chess_app/lib/chessboard.js' %}"></script>
+
+    <style>
+        body {
+            background: #f4f4f4;
+            text-align: center;
+            font-family: Arial, sans-serif;
+        }
+        #board {
+            width: 480px;
+            margin: 50px auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>ChessMasters – Szachownica</h1>
+    <div id="board"></div>
+
+    <script>
+        const board = Chessboard('board', {
+            draggable: true,
+            position: 'start',
+            pieceTheme: '{% static "chess_app/img/chesspieces/wikipedia/{piece}.png" %}'
+        });
+    </script>
+</body>
+</html>

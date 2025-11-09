@@ -1,3 +1,39 @@
-<h1>Welcome, Student!</h1>
-<p>This is your dashboard.</p>
-<a href="{% url 'logout' %}">Logout</a>
+{% load static %}
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <title>Student – Szachownica</title>
+  <link rel="stylesheet" href="{% static 'chess_app/lib/chessboard.css' %}">
+  <style>
+    body{font-family:Arial;text-align:center;margin:40px;background:#f4f4f4}
+    #board{width:480px;max-width:95vw;margin:30px auto}
+  </style>
+</head>
+<body>
+  <h1>Student, Trainer!</h1>
+  <a href="{% url 'logout' %}">Logout</a>
+
+  <div id="board"></div>
+
+
+  <script src="{% static 'chess_app/lib/jquery-3.7.1.min.js' %}"></script>
+
+  <script src="{% static 'chess_app/lib/chessboard.js' %}"></script>
+
+  <script>
+    function pieceTheme(piece){
+      return "{% static 'chess_app/img/chesspieces/wikipedia/' %}"+piece+".png";
+    }
+
+    $(function(){
+      const board = Chessboard('board', {
+        position: 'start',
+        draggable: true,
+        pieceTheme
+      });
+      $(window).on('resize', board.resize);
+    });
+  </script>
+</body>
+</html>

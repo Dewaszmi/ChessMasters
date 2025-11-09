@@ -1,6 +1,5 @@
 from django.contrib.auth import authenticate, login, logout
 from django.shortcuts import redirect, render
-
 from .forms import LoginForm
 from .models import Profile
 
@@ -32,3 +31,6 @@ def student_dashboard(request):
 
 def trainer_dashboard(request):
     return render(request, "trainer_dashboard.html")
+
+def dashboard(request):
+    return render(request, "dashboard.html")
