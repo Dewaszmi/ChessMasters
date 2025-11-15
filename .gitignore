@@ -161,3 +161,4 @@ cython_debug/
 #.idea/
 
 .vscode
+!chess_project/chess_app/static/chess_app/lib/**
