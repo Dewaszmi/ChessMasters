@@ -1,8 +1,9 @@
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.models import User
 from django.shortcuts import redirect, render
+
 from .forms import LoginForm, RegisterForm
 from .models import Profile
-from django.contrib.auth.models import User
 
 
 def login_view(request):
@@ -27,14 +28,17 @@ def logout_view(request):
 
 
 def student_dashboard(request):
-    return render(request, "student_dashboard.html")
+    fen = "rnbqkbnr/ppp2ppp/8/3pp3/8/2N5/PPPPPPPP/R1BQKBNR w KQkq - 0 1"
+    return render(request, "student_dashboard.html", {"initial_fen": fen})
 
 
 def trainer_dashboard(request):
     return render(request, "trainer_dashboard.html")
 
+
 def dashboard(request):
     return render(request, "dashboard.html")
+
 
 def register_view(request):
     if request.method == "POST":
@@ -43,7 +47,7 @@ def register_view(request):
             User.objects.create_user(
                 username=form.cleaned_data["username"],
                 email=form.cleaned_data.get("email", "") or "",
-                password=form.cleaned_data["password"]
+                password=form.cleaned_data["password"],
             )
             return redirect("login")
     else:
