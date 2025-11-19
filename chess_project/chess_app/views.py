@@ -1,7 +1,8 @@
 from django.contrib.auth import authenticate, login, logout
 from django.shortcuts import redirect, render
-from .forms import LoginForm
+from .forms import LoginForm, RegisterForm
 from .models import Profile
+from django.contrib.auth.models import User
 
 
 def login_view(request):
@@ -34,3 +35,18 @@ def trainer_dashboard(request):
 
 def dashboard(request):
     return render(request, "dashboard.html")
+
+def register_view(request):
+    if request.method == "POST":
+        form = RegisterForm(request.POST)
+        if form.is_valid():
+            User.objects.create_user(
+                username=form.cleaned_data["username"],
+                email=form.cleaned_data.get("email", "") or "",
+                password=form.cleaned_data["password"]
+            )
+            return redirect("login")
+    else:
+        form = RegisterForm()
+
+    return render(request, "register.html", {"form": form})
