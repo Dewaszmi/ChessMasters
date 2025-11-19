@@ -39,6 +39,10 @@
   var $fen = $('#fen');
   var $pgn = $('#pgn');
 
+  function removeHighlights () {
+    $('#board .square-55d63').removeClass('highlight1-32417 highlight-capture');
+  }
+  
   function onDragStart (source, piece, position, orientation) {
     if (game.game_over()) return false;
 
@@ -46,9 +50,30 @@
         (game.turn() === 'b' && piece.search(/^w/) !== -1)) {
       return false;
     }
+    removeHighlights();
+
+    var moves = game.moves({
+      square: source,
+      verbose: true
+    });
+
+    var $sourceSquare = $('#board .square-' + source);
+    $sourceSquare.addClass('highlight1-32417');
+
+    for (var i = 0; i < moves.length; i++) {
+      var $targetSquare = $('#board .square-' + moves[i].to);
+
+      $targetSquare.addClass('highlight1-32417');
+
+      if (moves[i].captured) {
+        $targetSquare.addClass('highlight-capture');
+      }
+    }
   }
 
   function onDrop (source, target) {
+    removeHighlights();
+
     var move = game.move({
       from: source,
       to: target,
@@ -62,6 +87,7 @@
 
   function onSnapEnd () {
     board.position(game.fen());
+    removeHighlights();
   }
 
   function updateStatus () {
