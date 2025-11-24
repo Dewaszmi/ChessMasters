@@ -1,3 +1,8 @@
+import csv
+import json
+import os
+
+from django.conf import settings
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.shortcuts import redirect, render
@@ -28,8 +33,13 @@ def logout_view(request):
 
 
 def student_dashboard(request):
-    fen = "rnbqkbnr/ppp2ppp/8/3pp3/8/2N5/PPPPPPPP/R1BQKBNR w KQkq - 0 1"
-    return render(request, "student_dashboard.html", {"initial_fen": fen})
+    file_path = os.path.join(settings.BASE_DIR, "chess_app", "data", "sample_task_batch.csv")
+
+    with open(file_path, "r", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        rows = list(reader)
+
+    return render(request, "student_dashboard.html", {"positions_json": json.dumps(rows)})
 
 
 def trainer_dashboard(request):

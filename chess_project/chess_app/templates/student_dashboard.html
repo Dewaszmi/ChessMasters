@@ -5,6 +5,7 @@
     <meta charset="utf-8" />
     <title>Trainer – Szachownica</title>
     <link rel="stylesheet" href="{% static 'chess_app/lib/chessboard.css' %}" />
+
     <style>
       body {
         font-family: Arial;
@@ -23,12 +24,15 @@
     <h1>Welcome, Student!</h1>
     <a href="{% url 'logout' %}">Logout</a>
 
+    <h2 id="task-counter"></h2>
+
     <div id="board"></div>
-    <div id="board"></div>
+
     <div style="max-width: 480px; margin: 20px auto; text-align: left">
-      <p><strong>Status:</strong> <span id="status"></span></p>
+      <!-- <p><strong>Status:</strong> <span id="status"></span></p>
       <p><strong>FEN:</strong> <span id="fen"></span></p>
-      <p><strong>PGN:</strong> <span id="pgn"></span></p>
+      <p><strong>PGN:</strong> <span id="pgn"></span></p> -->
+      <p id="result" style="font-size: 18px; font-weight: bold"></p>
     </div>
 
     <script src="{% static 'chess_app/lib/jquery-3.7.1.min.js' %}"></script>
@@ -36,102 +40,9 @@
     <script src="{% static 'chess_app/lib/chessboard.js' %}"></script>
 
     <script>
-      function pieceTheme(piece) {
-        return "{% static 'chess_app/img/chesspieces/wikipedia/' %}" + piece + ".png";
-      }
-
-      var initialFen = "{{ initial_fen }}";
-      var board = null;
-      var game = new Chess(initialFen !== "" ? initialFen : undefined);
-      var $status = $("#status");
-      var $fen = $("#fen");
-      var $pgn = $("#pgn");
-
-      function removeHighlights() {
-        $("#board .square-55d63").removeClass("highlight1-32417 highlight-capture");
-      }
-
-      function onDragStart(source, piece, position, orientation) {
-        if (game.game_over()) return false;
-
-        if ((game.turn() === "w" && piece.search(/^b/) !== -1) || (game.turn() === "b" && piece.search(/^w/) !== -1)) {
-          return false;
-        }
-        removeHighlights();
-
-        var moves = game.moves({
-          square: source,
-          verbose: true,
-        });
-
-        var $sourceSquare = $("#board .square-" + source);
-        $sourceSquare.addClass("highlight1-32417");
-
-        for (var i = 0; i < moves.length; i++) {
-          var $targetSquare = $("#board .square-" + moves[i].to);
-
-          $targetSquare.addClass("highlight1-32417");
-
-          if (moves[i].captured) {
-            $targetSquare.addClass("highlight-capture");
-          }
-        }
-      }
-
-      function onDrop(source, target) {
-        removeHighlights();
-
-        var move = game.move({
-          from: source,
-          to: target,
-          promotion: "q", // na razie zawsze hetman
-        });
-
-        if (move === null) return "snapback";
-
-        updateStatus();
-      }
-
-      function onSnapEnd() {
-        board.position(game.fen());
-        removeHighlights();
-      }
-
-      function updateStatus() {
-        var status = "";
-
-        var moveColor = game.turn() === "w" ? "White" : "Black";
-
-        if (game.in_checkmate()) {
-          status = "Game over, " + moveColor + " is in checkmate.";
-        } else if (game.in_draw()) {
-          status = "Game over, drawn position";
-        } else {
-          status = moveColor + " to move";
-          if (game.in_check()) {
-            status += ", " + moveColor + " is in check";
-          }
-        }
-
-        $status.html(status);
-        $fen.html(game.fen());
-        $pgn.html(game.pgn());
-      }
-
-      $(function () {
-        board = Chessboard("board", {
-          draggable: true,
-          position: initialFen !== "" ? initialFen : "start",
-          pieceTheme: pieceTheme,
-          onDragStart: onDragStart,
-          onDrop: onDrop,
-          onSnapEnd: onSnapEnd,
-        });
-
-        $(window).on("resize", board.resize);
-
-        updateStatus();
-      });
+      window.POSITIONS = {{ positions_json|safe }};
     </script>
+
+    <script src="{% static 'chess_app/js/student.js' %}"></script>
   </body>
 </html>
