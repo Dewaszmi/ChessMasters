@@ -4,10 +4,22 @@ function pieceTheme(piece) {
 
 // ======== GLOBALS ========
 
-let positions = window.POSITIONS;      // full CSV list
-let totalTasks = positions.length;
+const ALL_POSITIONS_SOURCE = window.POSITIONS;
+
+let positions = [];
+
+let totalTasks = 0;
 let currentIndex = 0;
 let moveMade = false;
+
+// Statystyki
+let sessionSolved = 0;
+let sessionCorrect = 0;
+const BATCH_SIZE = 5; // Pakiety zawsze po 5
+
+// Czas
+let taskStartTime = 0;
+let sessionTotalTime = 0;
 
 let board = null;
 let game = null;
@@ -32,6 +44,9 @@ function loadTask(index) {
 
   document.getElementById("task-counter").innerText =
     "Task " + (index + 1) + " / " + totalTasks;
+
+  // stoper
+  taskStartTime = Date.now();
 }
 
 function removeHighlights() {
@@ -66,27 +81,41 @@ function onDrop(source, target) {
 
   if (move === null) return "snapback";
 
+  let endTime = Date.now();
+  let timeTaken = (endTime - taskStartTime) / 1000;
+  sessionTotalTime += timeTaken;
+
   moveMade = true;
   updateStatus();
 
   let userMove = source + target;
   let bestMove = positions[currentIndex].best;
+  let isCorrect = (userMove === bestMove);
 
-  if (userMove === bestMove) {
-    $result.html("Correct! Best move: " + userMove);
+  sessionSolved++;
+  if (isCorrect) {
+    sessionCorrect++;
+    $result.html("Dobrze! Najlepszy ruch: " + userMove);
+    $result.css("color", "green");
   } else {
-    $result.html("Incorrect. Best move was: " + bestMove);
+    $result.html("Błąd. Najlepszy ruch to: " + bestMove);
+    $result.css("color", "red");
   }
 
-  // Load next task after 1.5 sec
-  setTimeout(function() {
-    currentIndex++;
-    if (currentIndex < totalTasks) {
-      loadTask(currentIndex);
-    } else {
-      $result.html("All tasks completed!");
-    }
-  }, 1500);
+  if (sessionSolved >= BATCH_SIZE) {
+    setTimeout(function() {
+        showStats();
+    }, 500);
+  } else {
+    setTimeout(function() {
+      currentIndex++;
+      if (currentIndex < totalTasks) {
+        loadTask(currentIndex);
+      } else {
+        $result.html("Wszystkie zadania ukończone!");
+      }
+    }, 1500);
+  }
 }
 
 function onSnapEnd() {
@@ -131,5 +160,74 @@ $(function () {
 
   $(window).on("resize", board.resize);
 
-  loadTask(currentIndex);
 });
+
+function showStats() {
+  $("#modal-correct-count").text(sessionCorrect);
+
+  let avgTime = sessionTotalTime / BATCH_SIZE;
+  $("#modal-avg-time").text(avgTime.toFixed(1));
+
+  $("#stats-modal").fadeIn();
+}
+
+function closeStats() {
+  $("#stats-modal").fadeOut();
+
+  sessionSolved = 0;
+  sessionCorrect = 0;
+
+  sessionTotalTime = 0;
+
+  $result.html("");
+
+  currentIndex++;
+  if (currentIndex < totalTasks) {
+    loadTask(currentIndex);
+  } else {
+    $result.html("Wszystkie zadania ukończone!");
+  }
+  showMenu();
+}
+
+// ======== MENU LOGIC ========
+
+function startLevel(level) {
+  // 1. Wybierz odpowiedni wycinek zadań z głównej listy
+  // w CSV: 0-4 (Easy), 5-9 (Medium), 10-14 (Hard)
+
+  if (level === 'easy') {
+    positions = ALL_POSITIONS_SOURCE.slice(0, 5);
+  } else if (level === 'medium') {
+    positions = ALL_POSITIONS_SOURCE.slice(5, 10);
+  } else if (level === 'hard') {
+    if (ALL_POSITIONS_SOURCE.length < 15) {
+        alert("Za mało zadań w pliku CSV! Dodaj więcej wierszy.");
+        return;
+    }
+    positions = ALL_POSITIONS_SOURCE.slice(10, 15);
+  }
+
+  // 2. Zresetuj zmienne gry
+  totalTasks = positions.length;
+  currentIndex = 0;
+  sessionSolved = 0;
+  sessionCorrect = 0;
+  sessionTotalTime = 0;
+
+  // 3. Przełącz widok (Ukryj Menu, Pokaż Grę)
+  $("#level-menu").hide();
+  $("#game-container").show();
+  $("#back-btn").show();
+
+  // 4. Załaduj pierwsze zadanie z wybranego pakietu
+  board.resize();
+  loadTask(0);
+}
+
+function showMenu() {
+  $("#game-container").hide();
+  $("#back-btn").hide();
+  $("#stats-modal").hide();
+  $("#level-menu").show();
+}
