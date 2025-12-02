@@ -161,4 +161,7 @@ cython_debug/
 #.idea/
 
 .vscode
-!chess_project/chess_app/static/chess_app/lib/**
+
+# Allow static JS/CSS library for chessboard
+!chess_project/chess_app/static/chess_app/lib/
+!chess_project/chess_app/static/chess_app/lib/*

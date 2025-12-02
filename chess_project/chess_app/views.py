@@ -50,15 +50,17 @@ def dashboard(request):
     return render(request, "dashboard.html")
 
 
+
 def register_view(request):
     if request.method == "POST":
         form = RegisterForm(request.POST)
         if form.is_valid():
-            User.objects.create_user(
-                username=form.cleaned_data["username"],
-                email=form.cleaned_data.get("email", "") or "",
-                password=form.cleaned_data["password"],
-            )
+            user = form.save()
+
+            profile, created = Profile.objects.get_or_create(user=user)
+            profile.role = form.cleaned_data["role"]
+            profile.save()
+
             return redirect("login")
     else:
         form = RegisterForm()
