@@ -50,7 +50,6 @@ def dashboard(request):
     return render(request, "dashboard.html")
 
 
-
 def register_view(request):
     if request.method == "POST":
         form = RegisterForm(request.POST)
@@ -66,3 +65,23 @@ def register_view(request):
         form = RegisterForm()
 
     return render(request, "register.html", {"form": form})
+
+
+from django.http import JsonResponse
+
+from .models import TaskResult
+
+
+def save_result(request):
+    if request.method == "POST" and request.user.is_authenticated:
+        data = json.loads(request.body)
+
+        level = data.get("level")
+        score = data.get("score")
+        avg_time = data.get("avg_time")
+
+        TaskResult.objects.create(user=request.user, level=level, score=score, avg_time=avg_time)
+
+        return JsonResponse({"status": "ok"})
+
+    return JsonResponse({"status": "error"}, status=400)

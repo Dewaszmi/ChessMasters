@@ -29,6 +29,8 @@ let $fen = null;
 let $pgn = null;
 let $result = null;
 
+let currentLevel = null;
+
 // ======== INITIALIZE ========
 
 function loadTask(index) {
@@ -58,7 +60,7 @@ function onDragStart(source, piece, position, orientation) {
   if (game.game_over()) return false;
 
   if ((game.turn() === "w" && piece.startsWith("b")) ||
-      (game.turn() === "b" && piece.startsWith("w"))) {
+    (game.turn() === "b" && piece.startsWith("w"))) {
     return false;
   }
 
@@ -103,11 +105,11 @@ function onDrop(source, target) {
   }
 
   if (sessionSolved >= BATCH_SIZE) {
-    setTimeout(function() {
-        showStats();
+    setTimeout(function () {
+      showStats();
     }, 500);
   } else {
-    setTimeout(function() {
+    setTimeout(function () {
       currentIndex++;
       if (currentIndex < totalTasks) {
         loadTask(currentIndex);
@@ -168,8 +170,23 @@ function showStats() {
   let avgTime = sessionTotalTime / BATCH_SIZE;
   $("#modal-avg-time").text(avgTime.toFixed(1));
 
+  // ---- NEW: send results to server ----
+  fetch("/save-result/", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-CSRFToken": getCookie("csrftoken"),
+    },
+    body: JSON.stringify({
+      level: currentLevel,
+      score: sessionCorrect,
+      avg_time: avgTime
+    }),
+  });
+
   $("#stats-modal").fadeIn();
 }
+
 
 function closeStats() {
   $("#stats-modal").fadeOut();
@@ -195,6 +212,7 @@ function closeStats() {
 function startLevel(level) {
   // 1. Wybierz odpowiedni wycinek zadań z głównej listy
   // w CSV: 0-4 (Easy), 5-9 (Medium), 10-14 (Hard)
+  currentLevel = level;
 
   if (level === 'easy') {
     positions = ALL_POSITIONS_SOURCE.slice(0, 5);
@@ -202,8 +220,8 @@ function startLevel(level) {
     positions = ALL_POSITIONS_SOURCE.slice(5, 10);
   } else if (level === 'hard') {
     if (ALL_POSITIONS_SOURCE.length < 15) {
-        alert("Za mało zadań w pliku CSV! Dodaj więcej wierszy.");
-        return;
+      alert("Za mało zadań w pliku CSV! Dodaj więcej wierszy.");
+      return;
     }
     positions = ALL_POSITIONS_SOURCE.slice(10, 15);
   }
@@ -230,4 +248,19 @@ function showMenu() {
   $("#back-btn").hide();
   $("#stats-modal").hide();
   $("#level-menu").show();
+}
+
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== "") {
+    const cookies = document.cookie.split(";");
+    for (let cookie of cookies) {
+      cookie = cookie.trim();
+      if (cookie.startsWith(name + "=")) {
+        cookieValue = cookie.substring(name.length + 1);
+        break;
+      }
+    }
+  }
+  return cookieValue;
 }
