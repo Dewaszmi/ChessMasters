@@ -165,12 +165,10 @@ $(function () {
 });
 
 function showStats() {
-  $("#modal-correct-count").text(sessionCorrect);
-
+  // Obliczamy średnią
   let avgTime = sessionTotalTime / BATCH_SIZE;
-  $("#modal-avg-time").text(avgTime.toFixed(1));
 
-  // ---- NEW: send results to server ----
+  // Wysyłamy dane do bazy (views.py -> save_result)
   fetch("/save-result/", {
     method: "POST",
     headers: {
@@ -182,30 +180,18 @@ function showStats() {
       score: sessionCorrect,
       avg_time: avgTime
     }),
-  });
-
-  $("#stats-modal").fadeIn();
+  })
+  .then(response => {
+      if (response.ok) {
+          // Gdy dane się zapiszą, idziemy na stronę wyników
+          window.location.href = "/results/";
+      } else {
+          alert("Błąd zapisu wyników!");
+      }
+  })
+  .catch(error => console.error('Error:', error));
 }
 
-
-function closeStats() {
-  $("#stats-modal").fadeOut();
-
-  sessionSolved = 0;
-  sessionCorrect = 0;
-
-  sessionTotalTime = 0;
-
-  $result.html("");
-
-  currentIndex++;
-  if (currentIndex < totalTasks) {
-    loadTask(currentIndex);
-  } else {
-    $result.html("Wszystkie zadania ukończone!");
-  }
-  showMenu();
-}
 
 // ======== MENU LOGIC ========
 

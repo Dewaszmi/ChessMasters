@@ -10,4 +10,6 @@ urlpatterns = [
     path("dashboard/", views.dashboard, name="dashboard"),
     path("register/", views.register_view, name="register"),
     path("save-result/", views.save_result, name="save_result"),
+    path("save-result/", views.save_result, name="save_result"),
+    path("results/", views.results_view, name="results"),
 ]

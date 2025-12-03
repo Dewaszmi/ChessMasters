@@ -10,6 +10,12 @@ from django.shortcuts import redirect, render
 from .forms import LoginForm, RegisterForm
 from .models import Profile
 
+from django.db.models import Avg, Count
+from django.utils import timezone
+from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse
+from .models import TaskResult
+
 
 def login_view(request):
     if request.method == "POST":
@@ -71,7 +77,7 @@ from django.http import JsonResponse
 
 from .models import TaskResult
 
-
+@csrf_exempt
 def save_result(request):
     if request.method == "POST" and request.user.is_authenticated:
         data = json.loads(request.body)
@@ -85,3 +91,40 @@ def save_result(request):
         return JsonResponse({"status": "ok"})
 
     return JsonResponse({"status": "error"}, status=400)
+
+
+def results_view(request):
+    if not request.user.is_authenticated:
+        return redirect("login")
+
+    all_results = TaskResult.objects.filter(user=request.user).order_by('-created_at')
+
+    if not all_results.exists():
+        return render(request, "results.html", {"no_data": True})
+
+    latest_result = all_results.first()
+
+    total_stats = all_results.aggregate(
+        total_games=Count('id'),
+        avg_score=Avg('score'),
+        avg_time=Avg('avg_time')
+    )
+
+    now = timezone.now()
+    month_results = all_results.filter(created_at__year=now.year, created_at__month=now.month)
+    month_avg = month_results.aggregate(avg_score=Avg('score'))['avg_score'] or 0
+
+    global_avg = total_stats['avg_score'] or 0
+    progress = month_avg - global_avg
+
+    context = {
+        "latest": latest_result,
+        "total_games": total_stats['total_games'],
+        "avg_score": round(global_avg, 2),
+        "avg_time": round(total_stats['avg_time'], 1),
+        "month_avg": round(month_avg, 2),
+        "progress": round(progress, 2),
+        "is_positive": progress >= 0
+    }
+
+    return render(request, "results.html", context)

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Twoje Wyniki</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f4f4f4; text-align: center; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .stat-grid { display: flex; justify-content: space-around; gap: 20px; }
+        .stat-box { flex: 1; background: #eef2f3; padding: 15px; border-radius: 8px; }
+        .highlight { font-size: 2em; font-weight: bold; color: #333; }
+        .green { color: green; }
+        .red { color: red; }
+        .btn { display: inline-block; padding: 10px 20px; background: #007bff; color: white; text-decoration: none; border-radius: 5px; margin-top: 20px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Podsumowanie Treningu</h1>
+
+    <div class="card" style="border-left: 5px solid #007bff;">
+        <h2>🏁 Ostatnia Sesja</h2>
+        <p>Poziom: <strong>{{ latest.level }}</strong></p>
+        <div class="stat-grid">
+            <div>
+                Poprawne: <br>
+                <span class="highlight">{{ latest.score }} / 5</span>
+            </div>
+            <div>
+                Średni czas: <br>
+                <span class="highlight">{{ latest.avg_time }} s</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>📈 Twoje Statystyki (Ogólne)</h2>
+        <div class="stat-grid">
+            <div class="stat-box">
+                Rozegranych sesji:<br>
+                <strong style="font-size: 1.5em">{{ total_games }}</strong>
+            </div>
+            <div class="stat-box">
+                Śr. Poprawność:<br>
+                <strong style="font-size: 1.5em">{{ avg_score }}</strong>
+            </div>
+            <div class="stat-box">
+                Śr. Czas:<br>
+                <strong style="font-size: 1.5em">{{ avg_time }} s</strong>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>📅 Progres w tym miesiącu</h2>
+        <p>Średnia z tego miesiąca: <strong>{{ month_avg }}</strong></p>
+        <p>
+            W porównaniu do ogólnej średniej:
+            {% if is_positive %}
+                <span class="highlight green">⬆ +{{ progress }}</span> (Super! Robisz postępy)
+            {% else %}
+                <span class="highlight red">⬇ {{ progress }}</span> (Musisz więcej ćwiczyć)
+            {% endif %}
+        </p>
+    </div>
+
+    <a href="{% url 'student_dashboard' %}" class="btn">⬅ Wróć do Zadań</a>
+</div>
+
+</body>
+</html>
