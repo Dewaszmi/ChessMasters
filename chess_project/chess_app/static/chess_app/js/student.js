@@ -105,19 +105,12 @@ function onDrop(source, target) {
   }
 
   if (sessionSolved >= BATCH_SIZE) {
-    setTimeout(function () {
-      showStats();
-    }, 500);
-  } else {
-    setTimeout(function () {
-      currentIndex++;
-      if (currentIndex < totalTasks) {
-        loadTask(currentIndex);
-      } else {
-        $result.html("Wszystkie zadania ukończone!");
-      }
-    }, 1500);
-  }
+  setTimeout(function () {
+    showStats();
+  }, 500);
+} else {
+  $("#next-btn").show();   
+}
 }
 
 function onSnapEnd() {
@@ -199,7 +192,7 @@ function startLevel(level) {
   // 1. Wybierz odpowiedni wycinek zadań z głównej listy
   // w CSV: 0-4 (Easy), 5-9 (Medium), 10-14 (Hard)
   currentLevel = level;
-
+  
   if (level === 'easy') {
     positions = ALL_POSITIONS_SOURCE.slice(0, 5);
   } else if (level === 'medium') {
@@ -234,7 +227,20 @@ function showMenu() {
   $("#back-btn").hide();
   $("#stats-modal").hide();
   $("#level-menu").show();
+  $("#next-btn").hide();
+
 }
+function nextTask() {
+  $("#next-btn").hide();   // schowaj przycisk
+
+  currentIndex++;
+  if (currentIndex < totalTasks) {
+    loadTask(currentIndex);
+  } else {
+    $result.html("Wszystkie zadania ukończone!");
+  }
+}
+
 
 function getCookie(name) {
   let cookieValue = null;
