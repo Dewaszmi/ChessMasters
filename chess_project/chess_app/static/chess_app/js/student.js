@@ -159,7 +159,7 @@ $(function () {
 
 function showStats() {
   // Obliczamy średnią
-  let avgTime = sessionTotalTime / BATCH_SIZE;
+  let avgTime = (sessionTotalTime / BATCH_SIZE).toFixed(2);
 
   // Wysyłamy dane do bazy (views.py -> save_result)
   fetch("/save-result/", {
