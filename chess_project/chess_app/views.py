@@ -5,17 +5,14 @@ import os
 from django.conf import settings
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
-from django.shortcuts import redirect, render
-
-from .forms import LoginForm, RegisterForm
-from .models import Profile
-from .models import Task
-
 from django.db.models import Avg, Count
+from django.http import JsonResponse
+from django.shortcuts import redirect, render
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
-from django.http import JsonResponse
-from .models import TaskResult
+
+from .forms import LoginForm, RegisterForm
+from .models import Profile, Task, TaskResult
 
 
 def login_view(request):
@@ -40,12 +37,21 @@ def logout_view(request):
 
 
 def student_dashboard(request):
-    tasks_from_db = list(Task.objects.all().values('id', 'fen', 'correct_move', 'level'))
-    
+    tasks_from_db = list(Task.objects.all().values("id", "fen", "correct_move", "level"))
+
     return render(request, "student_dashboard.html", {"positions_json": json.dumps(tasks_from_db)})
 
+
 def trainer_dashboard(request):
-    return render(request, "trainer_dashboard.html")
+    # Pobieramy wszystkich studentów i ich wyniki
+    students = User.objects.filter(profile__role="student").select_related("profile").all()
+
+    # Pobieramy wyniki wszystkich studentów
+    results = TaskResult.objects.select_related("user").order_by("-created_at")
+
+    context = {"students": students, "results": results}
+
+    return render(request, "trainer_dashboard.html", context)
 
 
 def dashboard(request):
@@ -73,6 +79,7 @@ from django.http import JsonResponse
 
 from .models import TaskResult
 
+
 @csrf_exempt
 def save_result(request):
     if request.method == "POST" and request.user.is_authenticated:
@@ -93,7 +100,7 @@ def results_view(request):
     if not request.user.is_authenticated:
         return redirect("login")
 
-    all_results = TaskResult.objects.filter(user=request.user).order_by('-created_at')
+    all_results = TaskResult.objects.filter(user=request.user).order_by("-created_at")
 
     if not all_results.exists():
         return render(request, "results.html", {"no_data": True})
@@ -101,26 +108,24 @@ def results_view(request):
     latest_result = all_results.first()
 
     total_stats = all_results.aggregate(
-        total_games=Count('id'),
-        avg_score=Avg('score'),
-        avg_time=Avg('avg_time')
+        total_games=Count("id"), avg_score=Avg("score"), avg_time=Avg("avg_time")
     )
 
     now = timezone.now()
     month_results = all_results.filter(created_at__year=now.year, created_at__month=now.month)
-    month_avg = month_results.aggregate(avg_score=Avg('score'))['avg_score'] or 0
+    month_avg = month_results.aggregate(avg_score=Avg("score"))["avg_score"] or 0
 
-    global_avg = total_stats['avg_score'] or 0
+    global_avg = total_stats["avg_score"] or 0
     progress = month_avg - global_avg
 
     context = {
         "latest": latest_result,
-        "total_games": total_stats['total_games'],
+        "total_games": total_stats["total_games"],
         "avg_score": round(global_avg, 2),
-        "avg_time": round(total_stats['avg_time'], 1),
+        "avg_time": round(total_stats["avg_time"], 1),
         "month_avg": round(month_avg, 2),
         "progress": round(progress, 2),
-        "is_positive": progress >= 0
+        "is_positive": progress >= 0,
     }
 
     return render(request, "results.html", context)
