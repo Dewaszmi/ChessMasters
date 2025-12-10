@@ -24,3 +24,10 @@ class TaskResult(models.Model):
 
     def __str__(self):
         return f"{self.user.username} – {self.level} – {self.score}/5"
+
+class Task(models.Model):
+    fen = models.CharField(max_length=100)
+    correct_move = models.CharField(max_length=10)
+    level = models.CharField(max_length=20, default="easy")
+    def __str__(self):
+        return f"Task {self.id} ({self.level})"

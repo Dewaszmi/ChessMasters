@@ -91,7 +91,7 @@ function onDrop(source, target) {
   updateStatus();
 
   let userMove = source + target;
-  let bestMove = positions[currentIndex].best;
+  let bestMove = positions[currentIndex].correct_move;
   let isCorrect = (userMove === bestMove);
 
   sessionSolved++;

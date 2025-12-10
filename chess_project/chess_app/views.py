@@ -9,6 +9,7 @@ from django.shortcuts import redirect, render
 
 from .forms import LoginForm, RegisterForm
 from .models import Profile
+from .models import Task
 
 from django.db.models import Avg, Count
 from django.utils import timezone
@@ -39,14 +40,9 @@ def logout_view(request):
 
 
 def student_dashboard(request):
-    file_path = os.path.join(settings.BASE_DIR, "chess_app", "data", "sample_task_batch.csv")
-
-    with open(file_path, "r", encoding="utf-8") as f:
-        reader = csv.DictReader(f)
-        rows = list(reader)
-
-    return render(request, "student_dashboard.html", {"positions_json": json.dumps(rows)})
-
+    tasks_from_db = list(Task.objects.all().values('id', 'fen', 'correct_move', 'level'))
+    
+    return render(request, "student_dashboard.html", {"positions_json": json.dumps(tasks_from_db)})
 
 def trainer_dashboard(request):
     return render(request, "trainer_dashboard.html")
