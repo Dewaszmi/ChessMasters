@@ -1,6 +1,4 @@
 from django.test import TestCase
-
-from django.test import TestCase
 from chess_app.forms import RegisterForm
 from django.contrib.auth.models import User
 from chess_app.models import TaskResult
