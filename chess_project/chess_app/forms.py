@@ -46,3 +46,14 @@ class RegisterForm(UserCreationForm):
         for field in self.fields:
             if 'class' not in self.fields[field].widget.attrs:
                 self.fields[field].widget.attrs['class'] = 'form-control'
+
+        def clean_password1(self):
+        password = self.cleaned_data.get("password1")
+
+        if not password:
+            raise forms.ValidationError("Hasło nie może być puste")
+
+        if len(password) < 3:
+            raise forms.ValidationError("Hasło musi mieć co najmniej 3 znaki")
+
+        return password
