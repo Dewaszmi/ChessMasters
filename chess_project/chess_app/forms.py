@@ -47,7 +47,7 @@ class RegisterForm(UserCreationForm):
             if 'class' not in self.fields[field].widget.attrs:
                 self.fields[field].widget.attrs['class'] = 'form-control'
 
-        def clean_password1(self):
+    def clean_password1(self):
         password = self.cleaned_data.get("password1")
 
         if not password:
