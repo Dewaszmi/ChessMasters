@@ -37,3 +37,12 @@ class Task(models.Model):
     level = models.CharField(max_length=20, default="easy")
     def __str__(self):
         return f"Task {self.id} ({self.level})"
+
+class Group(models.Model):
+    name = models.CharField(max_length=100)
+    trainer = models.ForeignKey(User, on_delete=models.CASCADE, related_name="trainer_groups")
+    students = models.ManyToManyField(User, blank=True, related_name="student_group")
+
+    def __str__(self):
+        return self.name
+

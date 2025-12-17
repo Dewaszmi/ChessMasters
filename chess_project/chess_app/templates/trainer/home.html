@@ -1,0 +1,39 @@
+
+{% load static %}
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <title>Trainer Panel</title>
+
+  <style>
+    body { font-family: Arial; background:#f4f4f4; padding:40px; text-align:center; }
+    .box { background:white; padding:30px; max-width:500px; margin:0 auto; border-radius:6px; }
+    ul { list-style:none; padding:0; }
+    li { margin:15px 0; }
+    a.button {
+      display:block;
+      padding:12px;
+      background:#333;
+      color:white;
+      text-decoration:none;
+      border-radius:4px;
+    }
+    a.button:hover { background:#555; }
+  </style>
+</head>
+<body>
+
+<div class="box">
+  <h1>Trainer dashboard</h1>
+
+  <ul>
+    <li><a class="button" href="{% url 'trainer_groups' %}">Students & groups</a></li>
+    <li><a class="button" href="{% url 'trainer_results' %}">Results</a></li>
+  </ul>
+
+  <a href="{% url 'logout' %}">Logout</a>
+</div>
+
+</body>
+</html>

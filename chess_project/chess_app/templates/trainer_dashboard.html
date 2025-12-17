@@ -18,19 +18,47 @@
 <h1>Trainer Dashboard</h1>
 <a href="{% url 'logout' %}">Logout</a>
 
+
+<h2>Create group</h2>
+<input type="text" id="group-name" placeholder="Group name">
+<button onclick="createGroup()">Create</button>
+
+<ul id="group-list">
+  {% for g in groups %}
+    <li data-id="{{ g.id }}">{{ g.name }}</li>
+  {% endfor %}
+</ul>
+
 <h2>Students</h2>
 <table>
   <tr>
     <th>Login</th>
+    <th>Group</th>
+    <th>Assign</th>
   </tr>
+
   {% for s in students %}
-  <tr>
+  <tr data-student="{{ s.id }}">
     <td>{{ s.username }}</td>
+    <td class="current-group">
+      {% if s.student_group.first %}
+        {{ s.student_group.first.name }}
+      {% else %}
+        —
+      {% endif %}
+    </td>
+    <td>
+      <select class="group-select">
+        {% for g in groups %}
+          <option value="{{ g.id }}">{{ g.name }}</option>
+        {% endfor %}
+      </select>
+      <button onclick="assignStudent({{ s.id }}, this)">Add</button>
+    </td>
   </tr>
-  {% empty %}
-  <tr><td colspan="2">No students found.</td></tr>
   {% endfor %}
 </table>
+
 
 <h2>Results</h2>
 <table>
@@ -55,5 +83,11 @@
   {% endfor %}
 </table>
 
+  <script>
+    window.AJAX_CREATE_GROUP_URL = "{% url 'ajax_create_group' %}";
+    window.AJAX_ASSIGN_STUDENT_URL = "{% url 'ajax_assign_student' %}";
+  </script>
+
+  <script src="{% static 'chess_app/js/trainer.js' %}"></script>
 </body>
 </html>

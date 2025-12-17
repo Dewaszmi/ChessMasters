@@ -1,0 +1,78 @@
+
+{% load static %}
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <title>Students & Groups</title>
+
+  <style>
+    body { font-family: Arial; background:#f4f4f4; padding:40px; }
+    table { width:90%; margin:auto; border-collapse:collapse; background:white; }
+    th, td { padding:10px; border:1px solid #ccc; text-align:center; }
+    th { background:#eee; }
+    h1, h2 { text-align:center; }
+    .top { text-align:center; margin-bottom:30px; }
+    .nav a { margin:0 10px; }
+  </style>
+</head>
+<body>
+
+<div class="top">
+  <h1>Students & Groups</h1>
+  <div class="nav">
+    <a href="{% url 'trainer_home' %}">Home</a> |
+    <a href="{% url 'trainer_results' %}">Results</a> |
+    <a href="{% url 'logout' %}">Logout</a>
+  </div>
+</div>
+
+<h2>Create group</h2>
+<div style="text-align:center;">
+  <input type="text" id="group-name" placeholder="Group name">
+  <button onclick="createGroup()">Create</button>
+</div>
+
+<h2>Students</h2>
+<table>
+  <tr>
+    <th>Login</th>
+    <th>Group</th>
+    <th>Assign</th>
+  </tr>
+
+  {% for s in students %}
+  <tr data-student="{{ s.id }}">
+    <td>{{ s.username }}</td>
+    <td class="current-group">
+      {% if s.student_group.first %}
+        {{ s.student_group.first.name }}
+      {% else %}
+        —
+      {% endif %}
+    </td>
+    <td>
+      {% if groups %}
+      <select class="group-select">
+        {% for g in groups %}
+          <option value="{{ g.id }}">{{ g.name }}</option>
+        {% endfor %}
+      </select>
+      <button onclick="assignStudent({{ s.id }}, this)">Add</button>
+      {% else %}
+      No groups
+      {% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+
+<script>
+  window.AJAX_CREATE_GROUP_URL = "{% url 'ajax_create_group' %}";
+  window.AJAX_ASSIGN_STUDENT_URL = "{% url 'ajax_assign_student' %}";
+</script>
+
+<script src="{% static 'chess_app/js/trainer_groups.js' %}"></script>
+
+</body>
+</html>
