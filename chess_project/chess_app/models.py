@@ -1,6 +1,6 @@
 from django.contrib.auth.models import User
 from django.db import models
-
+from django.db.models import Avg
 
 class Profile(models.Model):
     ROLE_CHOICES = [
@@ -24,6 +24,12 @@ class TaskResult(models.Model):
 
     def __str__(self):
         return f"{self.user.username} – {self.level} – {self.score}/5"
+    
+    @classmethod
+    def average_time_for_user(cls, user):
+        return cls.objects.filter(user=user).aggregate(
+            Avg("avg_time")
+        )["avg_time__avg"]
 
 class Task(models.Model):
     fen = models.CharField(max_length=100)
