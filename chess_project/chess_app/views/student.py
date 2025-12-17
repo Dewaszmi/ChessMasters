@@ -5,6 +5,7 @@ from django.db.models import Avg, Count
 from django.http import JsonResponse
 from django.shortcuts import redirect, render
 from django.utils import timezone
+from django.views.decorators.csrf import csrf_exempt
 
 from ..models import Task, TaskResult
 
@@ -33,6 +34,7 @@ def dashboard(request):
     return render(request, "dashboard.html")
 
 
+@csrf_exempt
 def save_result(request):
     if request.method == "POST" and request.user.is_authenticated:
         data = json.loads(request.body)
