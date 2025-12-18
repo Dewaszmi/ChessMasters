@@ -15,7 +15,8 @@ def login_view(request):
             if profile.role == "student":
                 return redirect("student_dashboard")
             else:
-                return redirect("trainer_dashboard")
+                # ZMIENIONO Z trainer_dashboard NA trainer_home
+                return redirect("trainer_home")
     else:
         form = LoginForm()
     return render(request, "login.html", {"form": form})

@@ -6,6 +6,12 @@ from django.http import JsonResponse
 from django.shortcuts import redirect, render
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
+from ..models import Module, StudentModule
+from django.http import JsonResponse
+from ..models import Task
+
 
 from ..models import Task, TaskResult
 
@@ -17,16 +23,23 @@ def is_student(user):
 
 student_required = user_passes_test(is_student)
 
-
-@student_required
+@login_required
 def student_dashboard(request):
-    tasks_from_db = list(
-        Task.objects.all().values("id", "fen", "correct_move", "level")
-    )
+    modules = Module.objects.all().order_by('created_at')
 
-    return render(
-        request, "student_dashboard.html", {"positions_json": json.dumps(tasks_from_db)}
-    )
+    modules_data = []
+    for m in modules:
+        progress = StudentModule.objects.filter(student=request.user, module=m).first()
+
+        modules_data.append({
+            'id': m.id,
+            'title': m.title,
+            'date': m.created_at.strftime("%b %d at %I:%M%p"),
+            'score': f"{progress.score} / {progress.max_score}" if progress else "0 / 100",
+            'is_completed': progress.is_completed if progress else False
+        })
+
+    return render(request, "student_dashboard.html", {"modules": modules_data})
 
 
 @student_required
@@ -87,3 +100,10 @@ def results_view(request):
     }
 
     return render(request, "results.html", context)
+
+
+def get_module_tasks(request, module_id):
+    module = Module.objects.get(id=module_id)
+    tasks = module.tasks.all()
+    tasks_list = list(tasks.values('fen', 'correct_move'))
+    return JsonResponse({'tasks': tasks_list})

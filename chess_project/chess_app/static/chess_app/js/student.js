@@ -106,7 +106,7 @@ function onDrop(source, target) {
 
   if (sessionSolved >= BATCH_SIZE) {
   setTimeout(function () {
-    showStats();
+    finishModule();
   }, 500);
 } else {
   $("#next-btn").show();   
@@ -186,73 +186,72 @@ function showStats() {
 }
 
 
-// ======== MENU LOGIC ========
+// ======== NOWA LOGIKA MODUŁÓW ========
 
-function startLevel(level) {
-  // 1. Wybierz odpowiedni wycinek zadań z głównej listy
-  // w CSV: 0-4 (Easy), 5-9 (Medium), 10-14 (Hard)
-  currentLevel = level;
-  
-  if (level === 'easy') {
-    positions = ALL_POSITIONS_SOURCE.slice(0, 5);
-  } else if (level === 'medium') {
-    positions = ALL_POSITIONS_SOURCE.slice(5, 10);
-  } else if (level === 'hard') {
-    if (ALL_POSITIONS_SOURCE.length < 15) {
-      alert("Za mało zadań w pliku CSV! Dodaj więcej wierszy.");
-      return;
-    }
-    positions = ALL_POSITIONS_SOURCE.slice(10, 15);
-  }
+let currentModuleId = null;
 
-  // 2. Zresetuj zmienne gry
-  totalTasks = positions.length;
-  currentIndex = 0;
-  sessionSolved = 0;
-  sessionCorrect = 0;
-  sessionTotalTime = 0;
+// Funkcja wywoływana po kliknięciu w moduł na liście (w HTML)
+function openModule(moduleId, title) {
+    currentModuleId = moduleId;
 
-  // 3. Przełącz widok (Ukryj Menu, Pokaż Grę)
-  $("#level-menu").hide();
-  $("#game-container").show();
-  $("#back-btn").show();
+    // Pobieramy zadania dla tego konkretnego modułu z serwera
+    fetch(`/get-module-tasks/${moduleId}/`)
+        .then(response => response.json())
+        .then(data => {
+            // Podmieniamy listę zadań na te z bazy
+            positions = data.tasks;
+            totalTasks = positions.length;
 
-  // 4. Załaduj pierwsze zadanie z wybranego pakietu
-  board.resize();
-  loadTask(0);
+            // Przełączamy widoki
+            $("#module-list-view").hide(); // Ukrywamy tabelę
+            $("#game-view").show();        // Pokazujemy szachownicę
+            $("#active-title").text(title);
+
+            // Resetujemy stan sesji
+            currentIndex = 0;
+            sessionSolved = 0;
+            sessionCorrect = 0;
+            sessionTotalTime = 0;
+
+            board.resize();
+            loadTask(0);
+        })
+        .catch(err => console.error("Błąd pobierania zadań:", err));
 }
 
-function showMenu() {
-  $("#game-container").hide();
-  $("#back-btn").hide();
-  $("#stats-modal").hide();
-  $("#level-menu").show();
-  $("#next-btn").hide();
-
-}
 function nextTask() {
-  $("#next-btn").hide();   // schowaj przycisk
+    $("#next-btn").hide();
+    currentIndex++;
 
-  currentIndex++;
-  if (currentIndex < totalTasks) {
-    loadTask(currentIndex);
-  } else {
-    $result.html("Wszystkie zadania ukończone!");
-  }
+    if (currentIndex < totalTasks) {
+        loadTask(currentIndex);
+    } else {
+        // Jeśli to było ostatnie zadanie, wyślij wynik do bazy
+        finishModule();
+    }
 }
 
+function finishModule() {
+    let avgTime = (sessionTotalTime / totalTasks).toFixed(2);
 
-function getCookie(name) {
-  let cookieValue = null;
-  if (document.cookie && document.cookie !== "") {
-    const cookies = document.cookie.split(";");
-    for (let cookie of cookies) {
-      cookie = cookie.trim();
-      if (cookie.startsWith(name + "=")) {
-        cookieValue = cookie.substring(name.length + 1);
-        break;
-      }
-    }
-  }
-  return cookieValue;
+    fetch("/save-result/", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": getCookie("csrftoken"),
+        },
+        body: JSON.stringify({
+            module_id: currentModuleId,
+            score: sessionCorrect,
+            avg_time: avgTime
+        }),
+    })
+    .then(response => {
+        if (response.ok) {
+            alert(`Ukończono moduł! Wynik: ${sessionCorrect}/${totalTasks}`);
+            location.reload();
+        } else {
+            alert("Błąd zapisu wyników!");
+        }
+    });
 }

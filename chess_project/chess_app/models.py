@@ -46,3 +46,21 @@ class Group(models.Model):
     def __str__(self):
         return self.name
 
+class Module(models.Model):
+    title = models.CharField(max_length=100) # Nazwa widoczna na liście, np. "Module 1 Knowledge Check"
+    tasks = models.ManyToManyField(Task)     # Zadania przypisane do tego modułu
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.title
+
+class StudentModule(models.Model):
+    student = models.ForeignKey(User, on_delete=models.CASCADE)
+    module = models.ForeignKey(Module, on_delete=models.CASCADE)
+    score = models.IntegerField(default=0)      # Ile zadań rozwiązano poprawnie
+    max_score = models.IntegerField(default=5)  # Całkowita liczba zadań w module
+    is_completed = models.BooleanField(default=False)
+    completed_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.student.username} - {self.module.title}"

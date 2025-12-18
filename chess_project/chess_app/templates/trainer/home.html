@@ -1,39 +1,58 @@
-
-{% load static %}
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pl">
 <head>
-  <meta charset="utf-8">
-  <title>Trainer Panel</title>
-
-  <style>
-    body { font-family: Arial; background:#f4f4f4; padding:40px; text-align:center; }
-    .box { background:white; padding:30px; max-width:500px; margin:0 auto; border-radius:6px; }
-    ul { list-style:none; padding:0; }
-    li { margin:15px 0; }
-    a.button {
-      display:block;
-      padding:12px;
-      background:#333;
-      color:white;
-      text-decoration:none;
-      border-radius:4px;
-    }
-    a.button:hover { background:#555; }
-  </style>
+    <meta charset="UTF-8">
+    <title>Panel Trenera</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
-<body>
+<body class="bg-light">
+    <div class="container mt-5">
+        <h1 class="text-center mb-4">Panel Trenera</h1>
+        <div class="text-center mb-4">
+            <a href="{% url 'trainer_home' %}" class="btn btn-link">Home</a> | 
+            <a href="{% url 'trainer_results' %}" class="btn btn-link">Results</a> | 
+            <a href="{% url 'logout' %}" class="btn btn-link">Logout</a>
+        </div>
 
-<div class="box">
-  <h1>Trainer dashboard</h1>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card shadow-sm p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h4>Moduły (Knowledge Checks)</h4>
+                        <a href="/admin/chess_app/module/add/" class="btn btn-sm btn-primary">+ Nowy Moduł</a>
+                    </div>
+                    <ul class="list-group">
+                        {% for mod in modules %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            {{ mod.title }}
+                            <span class="badge bg-secondary rounded-pill">{{ mod.tasks.count }} zadań</span>
+                        </li>
+                        {% empty %}
+                        <li class="list-group-item text-muted">Brak modułów. Dodaj je w panelu admina.</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
 
-  <ul>
-    <li><a class="button" href="{% url 'trainer_groups' %}">Students & groups</a></li>
-    <li><a class="button" href="{% url 'trainer_results' %}">Results</a></li>
-  </ul>
-
-  <a href="{% url 'logout' %}">Logout</a>
-</div>
-
+            <div class="col-md-6">
+                <div class="card shadow-sm p-4">
+                    <h4>Studenci i Grupy</h4>
+                    <table class="table table-sm mt-3">
+                        <thead>
+                            <tr><th>Login</th><th>Grupa</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for student in students %}
+                            <tr>
+                                <td>{{ student.username }}</td>
+                                <td>{% for g in student.student_group.all %}{{ g.name }}{% empty %}—{% endfor %}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

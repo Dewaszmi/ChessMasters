@@ -5,6 +5,9 @@ from django.contrib.auth.models import User
 from django.http import JsonResponse
 from django.shortcuts import render
 from django.views.decorators.http import require_POST
+from django.shortcuts import render
+from django.contrib.auth.models import User
+from ..models import Module, Group
 
 from ..models import Group, TaskResult
 
@@ -17,9 +20,18 @@ def is_trainer(user):
 trainer_required = user_passes_test(is_trainer)
 
 
-@trainer_required
+
+
 def trainer_home(request):
-    return render(request, "trainer/home.html")
+    students = User.objects.filter(profile__role='student')
+    groups = Group.objects.all()
+    modules = Module.objects.all()
+
+    return render(request, "trainer/home.html", {
+        "students": students,
+        "groups": groups,
+        "modules": modules
+    })
 
 
 @trainer_required

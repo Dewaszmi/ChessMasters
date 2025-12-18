@@ -12,6 +12,7 @@ urlpatterns = [
     path("student/", student.student_dashboard, name="student_dashboard"),
     path("save-result/", student.save_result, name="save_result"),
     path("results/", student.results_view, name="results"),
+    path("get-module-tasks/<int:module_id>/", student.get_module_tasks, name="get_module_tasks"),
     # Trainer
     path("trainer/", trainer.trainer_home, name="trainer_home"),
     path("trainer/groups/", trainer.trainer_groups, name="trainer_groups"),
@@ -22,5 +23,6 @@ urlpatterns = [
         "trainer/ajax/group/assign/",
         ajax.assign_student,
         name="ajax_assign_student",
+
     ),
 ]
