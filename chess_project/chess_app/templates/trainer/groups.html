@@ -1,75 +1,111 @@
-
 {% load static %}
 <!doctype html>
 <html lang="pl">
 <head>
-  <meta charset="utf-8">
-  <title>Students & Groups</title>
+    <meta charset="utf-8">
+    <title>Zarządzanie Grupami - ChessMasters</title>
 
-  <style>
-    body { font-family: Arial; background:#f4f4f4; padding:40px; }
-    table { width:90%; margin:auto; border-collapse:collapse; background:white; }
-    th, td { padding:10px; border:1px solid #ccc; text-align:center; }
-    th { background:#eee; }
-    h1, h2 { text-align:center; }
-    .top { text-align:center; margin-bottom:30px; }
-    .nav a { margin:0 10px; }
-  </style>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f4f4f4; padding: 40px; color: #333; }
+        .container { max-width: 1000px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        
+        h1, h2 { text-align: center; color: #2c3e50; }
+        
+        .nav { text-align: center; margin-bottom: 30px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        .nav a { margin: 0 15px; text-decoration: none; color: #3498db; font-weight: bold; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; border: 1px solid #dee2e6; text-align: center; }
+        th { background-color: #f8f9fa; color: #495057; }
+        
+        .muted { color: #777; font-size: 0.85em; }
+        .badge { display: inline-block; padding: 4px 8px; border-radius: 4px; background: #e9ecef; font-size: 0.9em; }
+        
+        .create-box { text-align: center; background: #f9f9f9; padding: 20px; border-radius: 8px; margin-bottom: 40px; border: 1px solid #ddd; }
+        input[type="text"] { padding: 8px; border: 1px solid #ccc; border-radius: 4px; width: 250px; }
+        button { padding: 8px 16px; cursor: pointer; background: #28a745; color: white; border: none; border-radius: 4px; }
+        button:hover { background: #218838; }
+        
+        select { padding: 7px; border-radius: 4px; border: 1px solid #ccc; }
+        .btn-add { background: #007bff; }
+        .btn-add:hover { background: #0069d9; }
+    </style>
 </head>
 <body>
 
-<div class="top">
-  <h1>Students & Groups</h1>
-  <div class="nav">
-    <a href="{% url 'trainer_home' %}">Home</a> |
-    <a href="{% url 'trainer_results' %}">Results</a> |
-    <a href="{% url 'logout' %}">Logout</a>
-  </div>
+<div class="container">
+    <h1>Students & Groups</h1>
+
+    <div class="nav">
+        <a href="{% url 'trainer_home' %}">Home</a>
+        <a href="{% url 'trainer_results' %}">Results</a>
+        <a href="{% url 'logout' %}">Logout</a>
+    </div>
+
+    <div class="create-box">
+        <h2>Utwórz nową grupę</h2>
+        <input type="text" id="group-name" placeholder="Nazwa grupy...">
+        <button onclick="createGroup()">Dodaj Grupę</button>
+        <p class="muted">Tworzy grupę przypisaną do Twojego konta trenera.</p>
+    </div>
+
+    <h2>Lista Studentów</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Student (Login)</th>
+                <th>Wszystkie grupy</th>
+                <th>Moja grupa</th>
+                <th>Akcja</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for s in students %}
+            <tr data-student="{{ s.id }}">
+                <td><strong>{{ s.username }}</strong></td>
+                
+                <td>
+                    {% for g in s.student_group.all %}
+                        <span class="badge">{{ g.name }} <small class="muted">({{ g.trainer.username }})</small></span>
+                    {% empty %}
+                        <span class="muted">Brak grup</span>
+                    {% endfor %}
+                </td>
+
+                <td class="current-group">
+                    {% if s.my_trainer_group %}
+                        <span class="badge" style="background: #d1ecf1; color: #0c5460;">{{ s.my_trainer_group.name }}</span>
+                    {% else %}
+                        <span class="muted">—</span>
+                    {% endif %}
+                </td>
+
+                <td>
+                    {% if groups %}
+                        <select class="group-select">
+                            <option value="">Wybierz grupę...</option>
+                            {% for g in groups %}
+                                <option value="{{ g.id }}">{{ g.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <button class="btn-add" onclick="assignStudent({{ s.id }}, this)">Zapisz</button>
+                    {% else %}
+                        <span class="muted">Najpierw utwórz grupę</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4">Nie znaleziono żadnych studentów w systemie.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 </div>
-
-<h2>Create group</h2>
-<div style="text-align:center;">
-  <input type="text" id="group-name" placeholder="Group name">
-  <button onclick="createGroup()">Create</button>
-</div>
-
-<h2>Students</h2>
-<table>
-  <tr>
-    <th>Login</th>
-    <th>Group</th>
-    <th>Assign</th>
-  </tr>
-
-  {% for s in students %}
-  <tr data-student="{{ s.id }}">
-    <td>{{ s.username }}</td>
-    <td class="current-group">
-      {% if s.student_group.first %}
-        {{ s.student_group.first.name }}
-      {% else %}
-        —
-      {% endif %}
-    </td>
-    <td>
-      {% if groups %}
-      <select class="group-select">
-        {% for g in groups %}
-          <option value="{{ g.id }}">{{ g.name }}</option>
-        {% endfor %}
-      </select>
-      <button onclick="assignStudent({{ s.id }}, this)">Add</button>
-      {% else %}
-      No groups
-      {% endif %}
-    </td>
-  </tr>
-  {% endfor %}
-</table>
 
 <script>
-  window.AJAX_CREATE_GROUP_URL = "{% url 'ajax_create_group' %}";
-  window.AJAX_ASSIGN_STUDENT_URL = "{% url 'ajax_assign_student' %}";
+    window.AJAX_CREATE_GROUP_URL = "{% url 'ajax_create_group' %}";
+    window.AJAX_ASSIGN_STUDENT_URL = "{% url 'ajax_assign_student' %}";
 </script>
 
 <script src="{% static 'chess_app/js/trainer_groups.js' %}"></script>

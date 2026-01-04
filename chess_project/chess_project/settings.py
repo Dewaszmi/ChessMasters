@@ -112,9 +112,20 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = "static/"
+# Adres URL używany w przeglądarce
+STATIC_URL = 'static/'
+
+# Folder, w którym Django szuka plików statycznych wewnątrz aplikacji
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
+]
+
+# To jest folder, do którego 'collectstatic' kopiuje pliki (wymagane przez błąd, który widziałeś)
+STATIC_ROOT = BASE_DIR / "staticfiles"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+LOGIN_URL = 'login'  # Nazwa 'login' musi odpowiadać name='login' w Twoim urls.py
+LOGIN_REDIRECT_URL = 'trainer_home'

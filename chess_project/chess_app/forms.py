@@ -2,6 +2,7 @@ from django import forms
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.contrib.auth.models import User
 from .models import Profile
+from .models import Module
 
 class LoginForm(AuthenticationForm):
     username = forms.CharField(
@@ -57,3 +58,13 @@ class RegisterForm(UserCreationForm):
             raise forms.ValidationError("Hasło musi mieć co najmniej 3 znaki")
 
         return password
+
+class ModuleForm(forms.ModelForm):
+    class Meta:
+        model = Module
+        fields = ["title", "tasks"]
+        labels = {"title": "Nazwa modułu", "tasks": "Zadania w module"}
+        widgets = {
+            "title": forms.TextInput(attrs={"class": "form-control"}),
+            "tasks": forms.SelectMultiple(attrs={"class": "form-select", "size": "10"}),
+        }
