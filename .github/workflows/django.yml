@@ -46,6 +46,7 @@ jobs:
         pip install dj-database-url  # Ensure this is in your requirements.txt too
 
     - name: Run Tests
+      working-directory: ./chess_project
       env:
         # We tell Django to use the local service instead of Neon
         DATABASE_URL: postgres://postgres:password@localhost:5432/chess_test_db
