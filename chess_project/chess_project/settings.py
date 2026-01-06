@@ -9,22 +9,27 @@ https://docs.djangoproject.com/en/5.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
-import dj_database_url
+
 import os
 from pathlib import Path
 
+import dj_database_url
+from dotenv import load_dotenv
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+load_dotenv(BASE_DIR / ".env")
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-d#(%@s!m8d$myy$isggs5)7a=e^zj3#0t5ry$$bf8igbfx232!"
+SECRET_KEY = os.environ.get("SECRET_KEY", "fallback-insecure-key")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get("DEBUG", "False") == "True"
 
 ALLOWED_HOSTS = []
 
@@ -74,13 +79,16 @@ WSGI_APPLICATION = "chess_project.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-NEON_DB_URL = "postgresql://neondb_owner:npg_uT3XqgRzlZi2@ep-gentle-glade-ahr00hqd-pooler.c-3.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
+# Use an environment variable for the DB URL, falling back to Neon only if not set
+# This allows the CI to "inject" a different database address
+DATABASE_URL = os.environ.get("DATABASE_URL")
 
 DATABASES = {
-    'default': dj_database_url.config(
-        default=NEON_DB_URL,
+    "default": dj_database_url.config(
+        default=DATABASE_URL,
         conn_max_age=600,
-        ssl_require=True
+        # Only require SSL if we are NOT in a local/CI environment
+        ssl_require=True if "neon.tech" in (DATABASE_URL or "") else False,
     )
 }
 
@@ -93,7 +101,6 @@ AUTH_PASSWORD_VALIDATORS = [
         "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
         "OPTIONS": {"min_length": 3},
     }
-    
 ]
 
 
@@ -113,7 +120,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 # Adres URL używany w przeglądarce
-STATIC_URL = 'static/'
+STATIC_URL = "static/"
 
 # Folder, w którym Django szuka plików statycznych wewnątrz aplikacji
 STATICFILES_DIRS = [
@@ -127,5 +134,6 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-LOGIN_URL = 'login'  # Nazwa 'login' musi odpowiadać name='login' w Twoim urls.py
-LOGIN_REDIRECT_URL = 'trainer_home'
+LOGIN_URL = "login"  # Nazwa 'login' musi odpowiadać name='login' w Twoim urls.py
+LOGIN_REDIRECT_URL = "trainer_home"
+
