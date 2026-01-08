@@ -2,6 +2,7 @@ from django.contrib.auth.models import User
 from django.db import models
 from django.db.models import Avg
 
+
 class Profile(models.Model):
     ROLE_CHOICES = [
         ("student", "Student"),
@@ -66,3 +67,14 @@ class StudentModule(models.Model):
 
     class Meta:
         unique_together = ('student', 'module')
+
+class StudentTaskResult(models.Model):
+    student = models.ForeignKey(User, on_delete=models.CASCADE)
+    module = models.ForeignKey(Module, on_delete=models.CASCADE)
+    task = models.ForeignKey(Task, on_delete=models.CASCADE)
+    is_correct = models.BooleanField()
+    user_move = models.CharField(max_length=10)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.student.username} - {self.task} - {'OK' if self.is_correct else 'FAIL'}"

@@ -2,71 +2,86 @@
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
-    <title>Twoje Wyniki</title>
+    <title>Twoje Oficjalne Statystyki</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body { font-family: Arial, sans-serif; background: #f4f4f4; text-align: center; padding: 20px; }
-        .container { max-width: 800px; margin: 0 auto; }
-        .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        .stat-grid { display: flex; justify-content: space-around; gap: 20px; }
-        .stat-box { flex: 1; background: #eef2f3; padding: 15px; border-radius: 8px; }
-        .highlight { font-size: 2em; font-weight: bold; color: #333; }
-        .green { color: green; }
-        .red { color: red; }
-        .btn { display: inline-block; padding: 10px 20px; background: #007bff; color: white; text-decoration: none; border-radius: 5px; margin-top: 20px; }
+        body { background: #f0f2f5; font-family: 'Segoe UI', sans-serif; }
+        .stat-card { border: none; border-radius: 15px; transition: transform 0.2s; }
+        .stat-card:hover { transform: translateY(-5px); }
+        .accuracy-circle { width: 100px; height: 100px; border-radius: 50%; border: 8px solid #e9ecef; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.2em; margin: 0 auto; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h1>Podsumowanie Treningu</h1>
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-5">
+        <h1>Twoje Postępy ♟️</h1>
+        <a href="{% url 'student_dashboard' %}" class="btn btn-secondary">← Wróć do zadań</a>
+    </div>
 
-    <div class="card" style="border-left: 5px solid #007bff;">
-        <h2>🏁 Ostatnia Sesja</h2>
-        <p>Poziom: <strong>{{ latest.level }}</strong></p>
-        <div class="stat-grid">
-            <div>
-                Poprawne: <br>
-                <span class="highlight">{{ latest.score }} / 5</span>
+    <div class="row text-center mb-5">
+        <div class="col-md-4">
+            <div class="card stat-card shadow-sm p-4 h-100">
+                <h5 class="text-muted small uppercase">Skuteczność</h5>
+                <div class="accuracy-circle border-success my-3 text-success">
+                    {{ accuracy }}%
+                </div>
+                <p class="small text-muted">Poprawne ruchy we wszystkich zadaniach</p>
             </div>
-            <div>
-                Średni czas: <br>
-                <span class="highlight">{{ latest.avg_time }} s</span>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card stat-card shadow-sm p-4 h-100">
+                <h5 class="text-muted small uppercase">Ukończone Moduły</h5>
+                <h2 class="display-4 fw-bold text-primary my-3">{{ completed_count }} / {{ total_assigned }}</h2>
+                <div class="progress" style="height: 10px;">
+                    <div class="progress-bar bg-primary" style="width: {{ completion_rate }}%"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card stat-card shadow-sm p-4 h-100">
+                <h5 class="text-muted small uppercase">Wykonane Zadania</h5>
+                <h2 class="display-4 fw-bold text-dark my-3">{{ total_tasks }}</h2>
+                <p class="small text-muted">Łączna liczba rozwiązanych pozycji</p>
             </div>
         </div>
     </div>
 
-    <div class="card">
-        <h2>📈 Twoje Statystyki (Ogólne)</h2>
-        <div class="stat-grid">
-            <div class="stat-box">
-                Rozegranych sesji:<br>
-                <strong style="font-size: 1.5em">{{ total_games }}</strong>
-            </div>
-            <div class="stat-box">
-                Śr. Poprawność:<br>
-                <strong style="font-size: 1.5em">{{ avg_score }}</strong>
-            </div>
-            <div class="stat-box">
-                Śr. Czas:<br>
-                <strong style="font-size: 1.5em">{{ avg_time }} s</strong>
-            </div>
+    <div class="card stat-card shadow-sm p-4">
+        <h4 class="mb-4">Ostatnia Aktywność</h4>
+        <div class="table-responsive">
+            <table class="table align-middle">
+                <thead>
+                    <tr class="text-muted small">
+                        <th>Moduł</th>
+                        <th>Twój Ruch</th>
+                        <th>Wynik</th>
+                        <th>Data</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for res in recent_tasks %}
+                    <tr>
+                        <td><strong>{{ res.module.title }}</strong></td>
+                        <td><code>{{ res.user_move }}</code></td>
+                        <td>
+                            {% if res.is_correct %}
+                                <span class="badge bg-success">Poprawny</span>
+                            {% else %}
+                                <span class="badge bg-danger">Błędny</span>
+                            {% endif %}
+                        </td>
+                        <td class="small text-muted">{{ res.timestamp|date:"d.m.Y H:i" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="4" class="text-center py-4 text-muted">Brak zarejestrowanych zadań. Rozwiąż pierwszy moduł!</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
-
-    <div class="card">
-        <h2>📅 Progres w tym miesiącu</h2>
-        <p>Średnia z tego miesiąca: <strong>{{ month_avg }}</strong></p>
-        <p>
-            W porównaniu do ogólnej średniej:
-            {% if is_positive %}
-                <span class="highlight green">⬆ +{{ progress }}</span> (Super! Robisz postępy)
-            {% else %}
-                <span class="highlight red">⬇ {{ progress }}</span> (Musisz więcej ćwiczyć)
-            {% endif %}
-        </p>
-    </div>
-
-    <a href="{% url 'student_dashboard' %}" class="btn">⬅ Wróć do Zadań</a>
 </div>
 
 </body>

@@ -8,9 +8,8 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
 from ..forms import ModuleForm
-from ..models import Group, Module, Profile, TaskResult
-from chess_app.models import StudentModule
 
+from ..models import Group, Module, Profile, TaskResult, StudentModule, StudentTaskResult
 
 
 def is_trainer(user):
@@ -175,3 +174,46 @@ def trainer_module_assign(request):
         f"Nowe przypisania: {created_count}."
     )
     return redirect("trainer_home")
+
+
+@trainer_required
+def trainer_results(request):
+    search_query = request.GET.get('search', '')
+    students = User.objects.filter(profile__role="student").order_by('username')
+
+    if search_query:
+        students = students.filter(username__icontains=search_query)
+
+    return render(request, "trainer/results.html", {
+        "students": students,
+        "search_query": search_query
+    })
+
+
+@trainer_required
+def student_detail_view(request, user_id):
+    student = get_object_or_404(User, id=user_id)
+    # Pobieramy postępy w modułach dla tego ucznia
+    module_progress = StudentModule.objects.filter(student=student).select_related('module')
+
+    return render(request, "trainer/student_detail.html", {
+        "student": student,
+        "module_progress": module_progress
+    })
+
+
+@trainer_required
+def student_module_detail_view(request, user_id, module_id):
+    student = get_object_or_404(User, id=user_id)
+    module = get_object_or_404(Module, id=module_id)
+    # Wyniki każdego osobnego zadania
+    task_results = StudentTaskResult.objects.filter(
+        student=student,
+        module=module
+    ).select_related('task').order_by('timestamp')
+
+    return render(request, "trainer/student_module_detail.html", {
+        "student": student,
+        "module": module,
+        "task_results": task_results
+    })

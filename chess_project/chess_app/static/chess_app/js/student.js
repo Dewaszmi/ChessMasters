@@ -11,6 +11,7 @@ let positions = [];
 let totalTasks = 0;
 let currentIndex = 0;
 let moveMade = false;
+let currentTaskResults = [];
 
 // Statystyki
 let sessionSolved = 0;
@@ -91,6 +92,11 @@ function onDrop(source, target) {
   updateStatus();
 
   let userMove = source + target;
+  currentTaskResults.push({
+      task_id: positions[currentIndex].id,
+      is_correct: isCorrect,
+      user_move: userMove
+  });
   let bestMove = positions[currentIndex].correct_move;
   let isCorrect = (userMove === bestMove);
 
@@ -243,7 +249,8 @@ function finishModule() {
         body: JSON.stringify({
             module_id: currentModuleId,
             score: sessionCorrect,
-            avg_time: avgTime
+            avg_time: avgTime,
+            tasks_data: currentTaskResults
         }),
     })
     .then(response => {

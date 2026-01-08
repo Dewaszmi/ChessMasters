@@ -5,10 +5,9 @@ from django.http import JsonResponse
 from django.shortcuts import redirect, render, get_object_or_404
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
 
-from ..models import Module, StudentModule, Task, TaskResult
-
-
+from ..models import Module, StudentModule, Task, TaskResult, StudentTaskResult
 
 def is_student(user):
     return user.is_authenticated and hasattr(user, 'profile') and user.profile.role == "student"
@@ -59,70 +58,63 @@ def get_module_tasks(request, module_id):
     return JsonResponse(tasks_list, safe=False)
 
 
-
 @login_required
 def results_view(request):
-    """Widok statystyk studenta (naprawia błąd AttributeError)."""
-    all_results = TaskResult.objects.filter(user=request.user).order_by("-created_at")
+    assigned_modules = StudentModule.objects.filter(student=request.user)
+    total_assigned = assigned_modules.count()
+    completed_count = assigned_modules.filter(is_completed=True).count()
 
-    if not all_results.exists():
-        return render(request, "student/results.html", {"no_data": True})
+    all_task_attempts = StudentTaskResult.objects.filter(student=request.user)
+    total_tasks_attempted = all_task_attempts.count()
+    correct_tasks = all_task_attempts.filter(is_correct=True).count()
 
-    latest_result = all_results.first()
+    accuracy = (correct_tasks / total_tasks_attempted * 100) if total_tasks_attempted > 0 else 0
 
-
-    total_stats = all_results.aggregate(
-        total_games=Count("id"), 
-        avg_score=Avg("score"), 
-        avg_time=Avg("avg_time")
-    )
-
-    now = timezone.now()
-    month_results = all_results.filter(
-        created_at__year=now.year, 
-        created_at__month=now.month
-    )
-    month_avg = month_results.aggregate(avg_score=Avg("score"))["avg_score"] or 0
-
-    global_avg = total_stats["avg_score"] or 0
-    progress = month_avg - global_avg
+    recent_tasks = all_task_attempts.select_related('task', 'module').order_by('-timestamp')[:5]
 
     context = {
-        "latest": latest_result,
-        "total_games": total_stats["total_games"],
-        "avg_score": round(global_avg, 2),
-        "avg_time": round(total_stats["avg_time"] or 0, 1),
-        "month_avg": round(month_avg, 2),
-        "progress": round(progress, 2),
-        "is_positive": progress >= 0,
+        "total_assigned": total_assigned,
+        "completed_count": completed_count,
+        "completion_rate": int((completed_count / total_assigned * 100)) if total_assigned > 0 else 0,
+        "total_tasks": total_tasks_attempted,
+        "accuracy": round(accuracy, 1),
+        "recent_tasks": recent_tasks,
     }
 
-    return render(request, "student/results.html", context)
+    return render(request, "results.html", context)
 
-
-
-@csrf_exempt
 @login_required
+@require_POST
 def save_result(request):
-    """Zapisuje wynik po rozwiązaniu zadania (dobrym lub złym)."""
-    if request.method == "POST":
-        try:
-            data = json.loads(request.body)
-            module_id = data.get('module_id')
-            is_correct = data.get('is_correct')
+    try:
+        data = json.loads(request.body)
+        module_id = data.get("module_id")
+        score = data.get("score")
+        # To są dane o każdym zadaniu, które dodaliśmy w student.js
+        tasks_data = data.get("tasks_data", [])
 
-           
-            rel = get_object_or_404(StudentModule, student=request.user, module_id=module_id)
+        module = get_object_or_404(Module, id=module_id)
 
-            if is_correct:
-                rel.score += 1 
-            
-           
-            if rel.score >= rel.max_score:
-                rel.is_completed = True
-            
-            rel.save()
-            return JsonResponse({"status": "ok", "new_score": rel.score})
-        except Exception as e:
-            return JsonResponse({"status": "error", "message": str(e)}, status=400)
-    return JsonResponse({"status": "error"}, status=405)
+        # 1. Aktualizujemy ogólny postęp w module
+        student_module, created = StudentModule.objects.get_or_create(
+            student=request.user,
+            module=module
+        )
+        student_module.score = score
+        student_module.is_completed = True
+        student_module.save()
+
+        # 2. Zapisujemy wyniki KAŻDEGO zadania z osobna
+        for task_info in tasks_data:
+            task = get_object_or_404(Task, id=task_info['task_id'])
+            StudentTaskResult.objects.create(
+                student=request.user,
+                module=module,
+                task=task,
+                is_correct=task_info['is_correct'],
+                user_move=task_info['user_move']
+            )
+
+        return JsonResponse({"status": "ok"})
+    except Exception as e:
+        return JsonResponse({"status": "error", "message": str(e)}, status=400)

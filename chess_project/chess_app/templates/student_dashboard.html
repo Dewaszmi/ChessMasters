@@ -18,9 +18,16 @@
 
 <div class="container mt-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>Twoje zadania</h2>
-        <a href="{% url 'logout' %}" class="btn btn-outline-danger btn-sm">Wyloguj</a>
+        <div>
+            <h2 class="mb-0">Twoje zadania</h2>
+            <p class="text-muted">Witaj, <strong>{{ user.username }}</strong>! Powodzenia w treningu.</p>
+        </div>
+        <div>
+            <a href="{% url 'results' %}" class="btn btn-primary me-2">📊 Moje Statystyki</a>
+            <a href="{% url 'logout' %}" class="btn btn-outline-danger btn-sm">Wyloguj</a>
+        </div>
     </div>
+    ```
 
     <div id="module-list-view" class="card shadow-sm">
         <table class="table table-hover align-middle mb-0">
@@ -156,7 +163,7 @@ async function handleMove(source, target) {
     board.draggable = false;
     document.getElementById("next-btn").style.display = "inline-block";
 
-    // WYSYŁANIE WYNIKU
+    // WYSYŁANIE WYNIKU - Poprawiona wersja
     try {
         const response = await fetch('/save-result/', {
             method: 'POST',
@@ -165,15 +172,23 @@ async function handleMove(source, target) {
                 'X-CSRFToken': getCookie('csrftoken')
             },
             body: JSON.stringify({
-                module_id: currentModuleId, // Upewnij się, że ta zmienna ma wartość!
-                is_correct: isCorrect
+                module_id: currentModuleId,
+                score: isCorrect ? 1 : 0,
+                // Kluczowe: wysyłamy dane o konkretnym zadaniu
+                tasks_data: [
+                    {
+                        task_id: task.id,
+                        is_correct: isCorrect,
+                        user_move: userMoveUCI
+                    }
+                ]
             })
         });
 
         const data = await response.json();
-        console.log("Serwer zapisał wynik:", data); // Sprawdź to w konsoli F12
+        console.log("Wynik zapisany w bazie:", data);
     } catch (err) {
-        console.error("Błąd sieci/serwera:", err);
+        console.error("Błąd zapisu:", err);
     }
 }
 

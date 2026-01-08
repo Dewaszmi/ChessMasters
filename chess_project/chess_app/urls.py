@@ -20,6 +20,8 @@ urlpatterns = [
     path("trainer/results/", trainer.trainer_results, name="trainer_results"),
     path("trainer/modules/add/", trainer.trainer_module_add, name="trainer_module_add"),
     path("trainer/modules/assign/", trainer.trainer_module_assign, name="trainer_module_assign"),
+    path("trainer/results/student/<int:user_id>/", trainer.student_detail_view, name="trainer_student_detail"),
+    path("trainer/results/student/<int:user_id>/module/<int:module_id>/", trainer.student_module_detail_view, name="trainer_student_module_detail"),
 
    
     path('ajax/create-group/', ajax.create_group, name='ajax_create_group'),
