@@ -8,8 +8,14 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
 from ..forms import ModuleForm, TaskForm
-
-from ..models import Group, Module, Profile, TaskResult, StudentModule, StudentTaskResult
+from ..models import (
+    Group,
+    Module,
+    Profile,
+    StudentModule,
+    StudentTaskResult,
+    TaskResult,
+)
 
 
 def is_trainer(user):
@@ -47,8 +53,7 @@ def trainer_home(request):
 @trainer_required
 def trainer_groups(request):
     students = (
-        User.objects
-        .filter(profile__role="student")
+        User.objects.filter(profile__role="student")
         .prefetch_related("student_group__trainer")
         .order_by("username")
     )
@@ -59,7 +64,9 @@ def trainer_groups(request):
     # dopisz “pola” na obiektach studentów (template wtedy używa s.my_group itd.)
     for s in students:
         s.current_group = s.student_group.all().order_by("id").first()  # dowolny trener
-        s.my_group = s.student_group.filter(trainer=request.user).order_by("id").first()
+        s.my_trainer_group = (
+            s.student_group.filter(trainer=request.user).order_by("id").first()
+        )
         # zablokuj przypisanie, jeśli student jest w grupie innego trenera
         s.locked_by_other = s.student_group.exclude(trainer=request.user).exists()
 
@@ -75,19 +82,22 @@ def trainer_groups(request):
 
 @trainer_required
 def trainer_results(request):
-    search_query = request.GET.get('search', '')
+    search_query = request.GET.get("search", "")
 
-    students = User.objects.filter(
-        student_group__trainer=request.user
-    ).distinct().order_by('username')
+    students = (
+        User.objects.filter(student_group__trainer=request.user)
+        .distinct()
+        .order_by("username")
+    )
 
     if search_query:
         students = students.filter(username__icontains=search_query)
 
-    return render(request, "trainer/results.html", {
-        "students": students,
-        "search_query": search_query
-    })
+    return render(
+        request,
+        "trainer/results.html",
+        {"students": students, "search_query": search_query},
+    )
 
 
 @require_POST
@@ -116,7 +126,6 @@ def ajax_assign_student(request):
     student = get_object_or_404(User, id=student_id)
     group = get_object_or_404(Group, id=group_id, trainer=request.user)
 
-
     for g in Group.objects.filter(students=student):
         g.students.remove(student)
 
@@ -136,8 +145,12 @@ def trainer_module_add(request):
             task_form = TaskForm(request.POST)
             if task_form.is_valid():
                 task = task_form.save()
-                messages.success(request, f"Dodano nowe zadanie: Task {task.id} ({task.level})")
-                return redirect("trainer_module_add")  # Odśwież, by zadanie pojawiło się na liście
+                messages.success(
+                    request, f"Dodano nowe zadanie: Task {task.id} ({task.level})"
+                )
+                return redirect(
+                    "trainer_module_add"
+                )  # Odśwież, by zadanie pojawiło się na liście
 
         elif "create_module" in request.POST:
             module_form = ModuleForm(request.POST)
@@ -146,10 +159,12 @@ def trainer_module_add(request):
                 messages.success(request, f"Utworzono moduł: {module.title}")
                 return redirect("trainer_home")
 
-    return render(request, "trainer/module_add.html", {
-        "module_form": module_form,
-        "task_form": task_form
-    })
+    return render(
+        request,
+        "trainer/module_add.html",
+        {"module_form": module_form, "task_form": task_form},
+    )
+
 
 @login_required
 def trainer_module_assign(request):
@@ -186,7 +201,7 @@ def trainer_module_assign(request):
     messages.success(
         request,
         f"Przypisano moduł '{module.title}' do grupy '{group.name}'. "
-        f"Nowe przypisania: {created_count}."
+        f"Nowe przypisania: {created_count}.",
     )
     return redirect("trainer_home")
 
@@ -195,12 +210,15 @@ def trainer_module_assign(request):
 def student_detail_view(request, user_id):
     student = get_object_or_404(User, id=user_id)
     # Pobieramy postępy w modułach dla tego ucznia
-    module_progress = StudentModule.objects.filter(student=student).select_related('module')
+    module_progress = StudentModule.objects.filter(student=student).select_related(
+        "module"
+    )
 
-    return render(request, "trainer/student_detail.html", {
-        "student": student,
-        "module_progress": module_progress
-    })
+    return render(
+        request,
+        "trainer/student_detail.html",
+        {"student": student, "module_progress": module_progress},
+    )
 
 
 @trainer_required
@@ -208,13 +226,15 @@ def student_module_detail_view(request, user_id, module_id):
     student = get_object_or_404(User, id=user_id)
     module = get_object_or_404(Module, id=module_id)
     # Wyniki każdego osobnego zadania
-    task_results = StudentTaskResult.objects.filter(
-        student=student,
-        module=module
-    ).select_related('task').order_by('timestamp')
+    task_results = (
+        StudentTaskResult.objects.filter(student=student, module=module)
+        .select_related("task")
+        .order_by("timestamp")
+    )
 
-    return render(request, "trainer/student_module_detail.html", {
-        "student": student,
-        "module": module,
-        "task_results": task_results
-    })
+    return render(
+        request,
+        "trainer/student_module_detail.html",
+        {"student": student, "module": module, "task_results": task_results},
+    )
+

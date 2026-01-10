@@ -123,9 +123,9 @@ USE_TZ = True
 STATIC_URL = "static/"
 
 # Folder, w którym Django szuka plików statycznych wewnątrz aplikacji
-STATICFILES_DIRS = [
-    BASE_DIR / "static",
-]
+# STATICFILES_DIRS = [
+#     BASE_DIR / "static",
+# ]
 
 # To jest folder, do którego 'collectstatic' kopiuje pliki (wymagane przez błąd, który widziałeś)
 STATIC_ROOT = BASE_DIR / "staticfiles"
@@ -136,4 +136,3 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 LOGIN_URL = "login"  # Nazwa 'login' musi odpowiadać name='login' w Twoim urls.py
 LOGIN_REDIRECT_URL = "trainer_home"
-

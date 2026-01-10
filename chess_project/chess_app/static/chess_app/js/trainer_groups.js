@@ -63,6 +63,7 @@ async function assignStudent(studentId, btn) {
             const currentGroupCell = row.querySelector(".current-group");
             currentGroupCell.innerHTML = `<span class="badge bg-info text-dark">${data.group_name}</span>`;
             alert("Przypisano studenta!");
+            window.location.reload()
         } else {
             alert("Błąd: " + (data.error || "Nieznany błąd"));
         }

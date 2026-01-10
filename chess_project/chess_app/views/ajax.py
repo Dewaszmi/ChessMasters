@@ -1,9 +1,11 @@
 import json
+
 from django.contrib.auth.models import User
 from django.http import JsonResponse
-from django.shortcuts import get_object_or_404
 from django.views.decorators.http import require_POST
+
 from ..models import Group
+
 
 @require_POST
 def create_group(request):
@@ -12,7 +14,10 @@ def create_group(request):
         return JsonResponse({"error": "unauthorized"}, status=403)
 
     # Weryfikacja roli trenera
-    if getattr(request.user, "profile", None) is None or request.user.profile.role != "trainer":
+    if (
+        getattr(request.user, "profile", None) is None
+        or request.user.profile.role != "trainer"
+    ):
         return JsonResponse({"error": "forbidden"}, status=403)
 
     try:
@@ -27,13 +32,17 @@ def create_group(request):
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
 
+
 @require_POST
 def assign_student(request):
     """Przypisuje studenta do konkretnej grupy trenera."""
     if not request.user.is_authenticated:
         return JsonResponse({"error": "unauthorized"}, status=403)
 
-    if getattr(request.user, "profile", None) is None or request.user.profile.role != "trainer":
+    if (
+        getattr(request.user, "profile", None) is None
+        or request.user.profile.role != "trainer"
+    ):
         return JsonResponse({"error": "forbidden"}, status=403)
 
     try:
@@ -50,7 +59,9 @@ def assign_student(request):
         group = Group.objects.get(id=group_id, trainer=request.user)
 
         # Usuwamy studenta z innych grup TEGO SAMEGO trenera
-        for g in Group.objects.filter(trainer=request.user, students=student).exclude(id=group.id):
+        for g in Group.objects.filter(trainer=request.user, students=student).exclude(
+            id=group.id
+        ):
             g.students.remove(student)
 
         group.students.add(student)
@@ -58,3 +69,4 @@ def assign_student(request):
         return JsonResponse({"status": "ok", "group_name": group.name})
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
+
