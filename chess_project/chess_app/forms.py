@@ -3,6 +3,7 @@ from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.contrib.auth.models import User
 from .models import Profile
 from .models import Module
+from .models import Task
 
 class LoginForm(AuthenticationForm):
     username = forms.CharField(
@@ -59,12 +60,28 @@ class RegisterForm(UserCreationForm):
 
         return password
 
+
+class TaskForm(forms.ModelForm):
+    class Meta:
+        model = Task
+        fields = ["fen", "correct_move", "level"]
+        widgets = {
+            "fen": forms.TextInput(attrs={"class": "form-control"}),
+            "correct_move": forms.TextInput(attrs={"class": "form-control"}),
+            "level": forms.Select(attrs={"class": "form-select"}), # To stworzy działający pasek
+        }
+
 class ModuleForm(forms.ModelForm):
+    tasks = forms.ModelMultipleChoiceField(
+        queryset=Task.objects.all().order_by('id'),
+        widget=forms.CheckboxSelectMultiple,
+        label="Wybierz zadania do modułu"
+    )
+
     class Meta:
         model = Module
         fields = ["title", "tasks"]
-        labels = {"title": "Nazwa modułu", "tasks": "Zadania w module"}
+        labels = {"title": "Nazwa nowego modułu"}
         widgets = {
-            "title": forms.TextInput(attrs={"class": "form-control"}),
-            "tasks": forms.SelectMultiple(attrs={"class": "form-select", "size": "10"}),
+            "title": forms.TextInput(attrs={"class": "form-control", "placeholder": "Np. Matowanie w 2 ruchach"}),
         }

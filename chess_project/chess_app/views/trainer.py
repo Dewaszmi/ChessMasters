@@ -7,7 +7,7 @@ from django.http import HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
-from ..forms import ModuleForm
+from ..forms import ModuleForm, TaskForm
 
 from ..models import Group, Module, Profile, TaskResult, StudentModule, StudentTaskResult
 
@@ -25,14 +25,10 @@ def is_trainer(user):
 trainer_required = user_passes_test(is_trainer)
 
 
-
-
 @trainer_required
 def trainer_home(request):
-  
-    students = User.objects.filter(profile__role="student")
+    students = User.objects.filter(student_group__trainer=request.user).distinct()
 
- 
     groups = Group.objects.filter(trainer=request.user).order_by("id")
 
     modules = Module.objects.all().order_by("-created_at")
@@ -79,10 +75,19 @@ def trainer_groups(request):
 
 @trainer_required
 def trainer_results(request):
-    results = TaskResult.objects.select_related("user").order_by("-created_at")
-    return render(request, "trainer/results.html", {"results": results})
+    search_query = request.GET.get('search', '')
 
+    students = User.objects.filter(
+        student_group__trainer=request.user
+    ).distinct().order_by('username')
 
+    if search_query:
+        students = students.filter(username__icontains=search_query)
+
+    return render(request, "trainer/results.html", {
+        "students": students,
+        "search_query": search_query
+    })
 
 
 @require_POST
@@ -122,19 +127,29 @@ def ajax_assign_student(request):
 
 @trainer_required
 def trainer_module_add(request):
+    module_form = ModuleForm()
+    task_form = TaskForm()
+
     if request.method == "POST":
-        form = ModuleForm(request.POST)
-        if form.is_valid():
-            module = form.save(commit=False)
-            module.save()
-            form.save_m2m()
-            messages.success(request, f"Utworzono moduł: {module.title}")
-            return redirect("trainer_home")
-    else:
-        form = ModuleForm()
+        # Sprawdzamy, który przycisk został kliknięty
+        if "add_task" in request.POST:
+            task_form = TaskForm(request.POST)
+            if task_form.is_valid():
+                task = task_form.save()
+                messages.success(request, f"Dodano nowe zadanie: Task {task.id} ({task.level})")
+                return redirect("trainer_module_add")  # Odśwież, by zadanie pojawiło się na liście
 
-    return render(request, "trainer/module_add.html", {"form": form})
+        elif "create_module" in request.POST:
+            module_form = ModuleForm(request.POST)
+            if module_form.is_valid():
+                module = module_form.save()
+                messages.success(request, f"Utworzono moduł: {module.title}")
+                return redirect("trainer_home")
 
+    return render(request, "trainer/module_add.html", {
+        "module_form": module_form,
+        "task_form": task_form
+    })
 
 @login_required
 def trainer_module_assign(request):
@@ -174,20 +189,6 @@ def trainer_module_assign(request):
         f"Nowe przypisania: {created_count}."
     )
     return redirect("trainer_home")
-
-
-@trainer_required
-def trainer_results(request):
-    search_query = request.GET.get('search', '')
-    students = User.objects.filter(profile__role="student").order_by('username')
-
-    if search_query:
-        students = students.filter(username__icontains=search_query)
-
-    return render(request, "trainer/results.html", {
-        "students": students,
-        "search_query": search_query
-    })
 
 
 @trainer_required

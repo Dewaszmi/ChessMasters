@@ -33,10 +33,25 @@ class TaskResult(models.Model):
         )["avg_time__avg"]
 
 class Task(models.Model):
+    LEVEL_CHOICES = [
+        ("easy", "Easy"),
+        ("medium", "Medium"),
+        ("hard", "Hard"),
+    ]
+
     fen = models.CharField(max_length=100)
     correct_move = models.CharField(max_length=10)
-    level = models.CharField(max_length=20, default="easy")
+    level = models.CharField(
+        max_length=20,
+        choices=LEVEL_CHOICES,
+        default="easy"
+    )
+
     def __str__(self):
+        return f"Task {self.id} ({self.level})"
+
+    def __str__(self):
+        # To sprawi, że w liście modułów zobaczysz np. "Task 13 (easy)"
         return f"Task {self.id} ({self.level})"
 
 class Group(models.Model):
