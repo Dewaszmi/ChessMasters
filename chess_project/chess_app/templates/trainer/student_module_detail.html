@@ -1,41 +1,118 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
     <title>Szczegóły Zadań</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body class="bg-light p-5">
-    <div class="container">
-        <a href="{% url 'trainer_student_detail' student.id %}" class="btn btn-secondary mb-4">← Wróć do profilu ucznia</a>
-        <h3>Moduł: {{ module.title }}</h3>
-        <h4 class="text-muted mb-4">Analiza każdego zadania:</h4>
 
-        <table class="table table-white shadow-sm rounded overflow-hidden">
-            <thead class="table-dark">
-                <tr>
-                    <th>Nr zadania</th>
-                    <th>Ruch Ucznia</th>
-                    <th>Wynik</th>
-                    <th>Data i godzina</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for res in task_results %}
-                <tr>
-                    <td>Zadanie #{{ forloop.counter }}</td>
-                    <td><code>{{ res.user_move }}</code></td>
-                    <td>
-                        {% if res.is_correct %}
-                            <span class="badge bg-success">Poprawny</span>
-                        {% else %}
-                            <span class="badge bg-danger">Błędny</span>
-                        {% endif %}
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'chess_app/lib/chessboard.css' %}">
+</head>
+
+<body class="bg-light p-5">
+<div class="container">
+
+    <a href="{% url 'trainer_student_detail' student.id %}" class="btn btn-secondary mb-4">
+        ← Wróć do profilu ucznia
+    </a>
+
+    <h3>Moduł: {{ module.title }}</h3>
+    <h5 class="text-muted mb-4">Analiza każdego zadania</h5>
+
+    <table class="table table-white shadow-sm rounded overflow-hidden">
+        <thead class="table-dark">
+        <tr>
+            <th>Nr zadania</th>
+            <th>Ruch ucznia</th>
+            <th>Wynik</th>
+            <th>Data</th>
+            <th>Analiza</th>
+        </tr>
+        </thead>
+        <tbody>
+
+        {% for res in task_results %}
+        <tr>
+            <td>Zadanie #{{ forloop.counter }}</td>
+            <td><code>{{ res.user_move }}</code></td>
+            <td>
+                {% if res.is_correct %}
+                    <span class="badge bg-success">Poprawny</span>
+                {% else %}
+                    <span class="badge bg-danger">Błędny</span>
+                {% endif %}
+            </td>
+            <td>{{ res.timestamp|date:"d.m.Y H:i" }}</td>
+            <td>
+                <button class="btn btn-sm btn-outline-primary"
+                        onclick="toggleAnalysis({{ forloop.counter0 }})">
+                    Pokaż
+                </button>
+            </td>
+        </tr>
+
+        <tr id="analysis-row-{{ forloop.counter0 }}"
+            style="display:none;"
+            data-fen="{{ res.task.fen }}"
+            data-user-move="{{ res.user_move }}"
+            data-correct-move="{{ res.task.correct_move }}">
+
+            <td colspan="5">
+                <div class="row text-center mb-2">
+                    <div class="col">Pozycja początkowa</div>
+                    <div class="col">Ruch ucznia</div>
+                    <div class="col">Poprawny ruch</div>
+                </div>
+
+                <div class="row">
+                    <div class="col"><div id="board-start-{{ forloop.counter0 }}"></div></div>
+                    <div class="col"><div id="board-user-{{ forloop.counter0 }}"></div></div>
+                    <div class="col"><div id="board-correct-{{ forloop.counter0 }}"></div></div>
+                </div>
+            </td>
+        </tr>
+        {% endfor %}
+
+        </tbody>
+    </table>
+</div>
+
+<script src="{% static 'chess_app/lib/jquery-3.7.1.min.js' %}"></script>
+<script src="{% static 'chess_app/lib/chess.min.js' %}"></script>
+<script src="{% static 'chess_app/lib/chessboard.js' %}"></script>
+
+<script>
+function pieceTheme(piece) {
+    return "{% static 'chess_app/img/chesspieces/wikipedia/' %}" + piece + ".png";
+}
+
+function toggleAnalysis(index) {
+    const row = document.getElementById("analysis-row-" + index);
+
+    if (row.style.display === "none") {
+        row.style.display = "table-row";
+        initBoards(row, index);
+    } else {
+        row.style.display = "none";
+    }
+}
+
+function initBoards(row, index) {
+    const fen = row.dataset.fen;
+    const userMove = row.dataset.userMove;
+    const correctMove = row.dataset.correctMove;
+
+    const gameUser = new Chess(fen);
+    gameUser.move(userMove, { sloppy: true });
+
+    const gameCorrect = new Chess(fen);
+    gameCorrect.move(correctMove, { sloppy: true });
+
+    Chessboard("board-start-" + index, { position: fen, pieceTheme });
+    Chessboard("board-user-" + index, { position: gameUser.fen(), pieceTheme });
+    Chessboard("board-correct-" + index, { position: gameCorrect.fen(), pieceTheme });
+}
+</script>
+
 </body>
 </html>
