@@ -33,8 +33,13 @@ def register_view(request):
         if form.is_valid():
             user = form.save()
 
-            profile, _ = Profile.objects.get_or_create(user=user)
-            profile.role = form.cleaned_data["role"]
+            profile = user.profile
+            profile.role = form.cleaned_data.get("role")
+            profile.email = form.cleaned_data.get("email")
+
+            # profile, _ = Profile.objects.get_or_create(
+            #     user=user, role=role, email_notification=email
+            # )
             profile.save()
 
             return redirect("login")

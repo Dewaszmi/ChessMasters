@@ -56,15 +56,17 @@ async function assignStudent(studentId, btn) {
             body: JSON.stringify({ student_id: studentId, group_id: groupId }),
         });
 
-        const data = await res.json();
+        //const data = await res.json();
 
         if (res.ok) {
             // Sukces: aktualizujemy tekst w kolumnie "Obecna Grupa"
-            const currentGroupCell = row.querySelector(".current-group");
-            currentGroupCell.innerHTML = `<span class="badge bg-info text-dark">${data.group_name}</span>`;
+            // const currentGroupCell = row.querySelector(".current-group");
+            // currentGroupCell.innerHTML = `<span class="badge bg-info text-dark">${data.group_name}</span>`;
             alert("Przypisano studenta!");
+            // TODO: Z JAKIEGOS POWODU SIE NIE PRZELADOWUJE I BRZYDKO WYGLADA
             window.location.reload()
         } else {
+            const data = await res.json
             alert("Błąd: " + (data.error || "Nieznany błąd"));
         }
     } catch (error) {

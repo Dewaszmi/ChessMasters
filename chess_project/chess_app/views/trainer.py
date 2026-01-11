@@ -1,8 +1,10 @@
 import json
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.models import User
+from django.core.mail import send_mass_mail
 from django.http import HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
@@ -166,12 +168,8 @@ def trainer_module_add(request):
     )
 
 
-@login_required
+@trainer_required
 def trainer_module_assign(request):
-    # dodatkowy bezpiecznik
-    if not is_trainer(request.user):
-        return HttpResponseForbidden("Brak dostępu")
-
     if request.method != "POST":
         return redirect("trainer_home")
 
@@ -198,9 +196,38 @@ def trainer_module_assign(request):
         if created:
             created_count += 1
 
+    datatuple = []
+    subject = f"ChessMasters: Nowy moduł zadań - {module.title}"
+
+    # Instead of filtering students, filter the Profiles associated with that group
+    # This is much cleaner for the ORM to handle
+
+    # BUG: NIE DZIALA
+    students_with_emails = (
+        Profile.objects.filter(user__student_group=group, email__isnull=False)
+        .exclude(email="")
+        .select_related("user")
+    )
+
+    for student in students_with_emails:
+        recipient_name = student.user.username
+        recipient_email = student.user.email
+        message = (
+            f"Cześć {recipient_name}!\n\n"
+            f"Twój trener przypisał Ci nowy moduł z zadaniami: {module.title}.\n\n"
+            f"Powodzenia!"
+        )
+
+        datatuple.append(
+            (subject, message, settings.DEFAULT_FROM_EMAIL, [recipient_email])
+        )
+
+    if datatuple:
+        send_mass_mail(tuple(datatuple), fail_silently=True)
+
     messages.success(
         request,
-        f"Przypisano moduł '{module.title}' do grupy '{group.name}'. "
+        f"Przypisano moduł '{module.title}' do grupy '{group.name}'. Wysłano {len(datatuple)} powiadomień na email."
         f"Nowe przypisania: {created_count}.",
     )
     return redirect("trainer_home")
@@ -237,4 +264,3 @@ def student_module_detail_view(request, user_id, module_id):
         "trainer/student_module_detail.html",
         {"student": student, "module": module, "task_results": task_results},
     )
-

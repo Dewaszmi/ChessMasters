@@ -136,3 +136,14 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 LOGIN_URL = "login"  # Nazwa 'login' musi odpowiadać name='login' w Twoim urls.py
 LOGIN_REDIRECT_URL = "trainer_home"
+
+# EMAIL
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = os.getenv("EMAIL_USER")
+# IMPORTANT: Use an "App Password," not your regular login password
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_PASS")
+# DEFAULT_FROM_EMAIL = 'ChessMasters <c80510930@gmail.com>'
