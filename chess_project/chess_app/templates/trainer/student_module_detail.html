@@ -8,18 +8,39 @@
 <body class="bg-light p-5">
     <div class="container">
         <a href="{% url 'trainer_student_detail' student.id %}" class="btn btn-secondary mb-4">← Wróć do profilu ucznia</a>
-        <h3>Moduł: {{ module.title }}</h3>
-        <h4 class="text-muted mb-4">Analiza każdego zadania:</h4>
+        
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3>Moduł: <span class="text-primary">{{ module.title }}</span></h3>
+            {% if student_module.is_completed %}
+                <span class="badge bg-primary fs-6">Ukończono</span>
+            {% else %}
+                <span class="badge bg-warning text-dark fs-6">W trakcie</span>
+            {% endif %}
+        </div>
 
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="card shadow-sm border-0 text-center p-3">
+                    <h6 class="text-muted">Postęp Zadania</h6>
+                    <h4 class="mb-0">{{ tasks_attempted }} / {{ total_tasks }}</h4>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card shadow-sm border-0 text-center p-3">
+                    <h6 class="text-muted">Poprawne</h6>
+                    <h4 class="mb-0 text-success">{{ student_module.score }}</h4>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card shadow-sm border-0 text-center p-3">
+                    <h6 class="text-muted">Celność (Accuracy)</h6>
+                    <h4 class="mb-0">{{ accuracy }}%</h4>
+                </div>
+            </div>
+        </div>
+
+        <h4 class="text-muted mb-4">Analiza każdego zadania:</h4>
         <table class="table table-white shadow-sm rounded overflow-hidden">
-            <thead class="table-dark">
-                <tr>
-                    <th>Nr zadania</th>
-                    <th>Ruch Ucznia</th>
-                    <th>Wynik</th>
-                    <th>Data i godzina</th>
-                </tr>
-            </thead>
             <tbody>
                 {% for res in task_results %}
                 <tr>
@@ -32,6 +53,7 @@
                             <span class="badge bg-danger">Błędny</span>
                         {% endif %}
                     </td>
+                    <td class="text-muted small">{{ res.timestamp|date:"d.m.Y H:i" }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
