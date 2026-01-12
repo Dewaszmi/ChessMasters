@@ -83,38 +83,38 @@ def results_view(request):
 
     return render(request, "results.html", context)
 
+# student.py (views)
 @login_required
 @require_POST
 def save_result(request):
     try:
         data = json.loads(request.body)
         module_id = data.get("module_id")
-        score = data.get("score")
-        # To są dane o każdym zadaniu, które dodaliśmy w student.js
         tasks_data = data.get("tasks_data", [])
-
         module = get_object_or_404(Module, id=module_id)
 
-        # 1. Aktualizujemy ogólny postęp w module
-        student_module, created = StudentModule.objects.get_or_create(
-            student=request.user,
-            module=module
-        )
-        student_module.score = score
-        student_module.is_completed = True
-        student_module.save()
-
-        # 2. Zapisujemy wyniki KAŻDEGO zadania z osobna
+        # 1. Save Task results
         for task_info in tasks_data:
-            task = get_object_or_404(Task, id=task_info['task_id'])
-            StudentTaskResult.objects.create(
-                student=request.user,
-                module=module,
-                task=task,
-                is_correct=task_info['is_correct'],
-                user_move=task_info['user_move']
+            StudentTaskResult.objects.update_or_create(
+                student=request.user, module=module, task_id=task_info['task_id'],
+                defaults={'is_correct': task_info['is_correct'], 'user_move': task_info['user_move']}
             )
 
-        return JsonResponse({"status": "ok"})
+        # 2. Recalculate Score from all results in this module
+        correct_count = StudentTaskResult.objects.filter(
+            student=request.user, module=module, is_correct=True
+        ).count()
+
+        # 3. Update StudentModule and check for completion
+        sm = get_object_or_404(StudentModule, student=request.user, module=module)
+        sm.score = correct_count
+        
+        # Mark completed if user has attempted all tasks in the module
+        if StudentTaskResult.objects.filter(student=request.user, module=module).count() >= module.tasks.count():
+            sm.is_completed = True
+        
+        sm.save() # This triggers your trainer notification signal
+
+        return JsonResponse({"status": "ok", "score": correct_count})
     except Exception as e:
         return JsonResponse({"status": "error", "message": str(e)}, status=400)

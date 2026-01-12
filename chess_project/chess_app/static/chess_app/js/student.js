@@ -1,264 +1,161 @@
-function pieceTheme(piece) {
-  return "/static/chess_app/img/chesspieces/wikipedia/" + piece + ".png";
-}
-
-// ======== GLOBALS ========
-
-const ALL_POSITIONS_SOURCE = window.POSITIONS;
-
-let positions = [];
-
-let totalTasks = 0;
-let currentIndex = 0;
-let moveMade = false;
-let currentTaskResults = [];
-
-// Statystyki
-let sessionSolved = 0;
-let sessionCorrect = 0;
-const BATCH_SIZE = 5; // Pakiety zawsze po 5
-
-// Czas
-let taskStartTime = 0;
-let sessionTotalTime = 0;
-
+// ======== GLOBALS & STATE ========
 let board = null;
-let game = null;
+let game = new Chess();
+let currentTasks = [];
+let currentTaskIndex = 0;
+let currentModuleId = null;
 
-let $status = null;
-let $fen = null;
-let $pgn = null;
-let $result = null;
-
-let currentLevel = null;
-
-// ======== INITIALIZE ========
-
-function loadTask(index) {
-  let pos = positions[index];
-
-  game = new Chess(pos.fen);
-  moveMade = false;
-
-  board.position(pos.fen);
-  updateStatus();
-
-  $result.html("");
-
-  document.getElementById("task-counter").innerText =
-    "Task " + (index + 1) + " / " + totalTasks;
-
-  // stoper
-  taskStartTime = Date.now();
+// ======== HELPERS ========
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
 }
 
 function removeHighlights() {
-  $("#board .square-55d63").removeClass("highlight1-32417 highlight-capture");
+    $('#board .square-55d63').removeClass('highlight1-32417 highlight-capture');
 }
 
-function onDragStart(source, piece, position, orientation) {
-  if (moveMade) return false;
-  if (game.game_over()) return false;
+// ======== CORE LOGIC ========
+async function openModule(moduleId, title) {
+    try {
+        currentModuleId = moduleId;
+        const response = await fetch(`/get-module-tasks/${moduleId}/`);
+        if (!response.ok) throw new Error("Błąd pobierania zadań.");
+        
+        currentTasks = await response.json();
+        
+        if (currentTasks.length === 0) {
+            alert("Ten moduł nie ma zadań.");
+            return;
+        }
 
-  if ((game.turn() === "w" && piece.startsWith("b")) ||
-    (game.turn() === "b" && piece.startsWith("w"))) {
-    return false;
-  }
-
-  removeHighlights();
-
-  let moves = game.moves({ square: source, verbose: true });
-  $("#board .square-" + source).addClass("highlight1-32417");
-
-  for (let move of moves) {
-    let $sq = $("#board .square-" + move.to);
-    $sq.addClass("highlight1-32417");
-    if (move.captured) $sq.addClass("highlight-capture");
-  }
-}
-
-function onDrop(source, target) {
-  if (moveMade) return "snapback";
-
-  let move = game.move({ from: source, to: target, promotion: "q" });
-
-  if (move === null) return "snapback";
-
-  let endTime = Date.now();
-  let timeTaken = (endTime - taskStartTime) / 1000;
-  sessionTotalTime += timeTaken;
-
-  moveMade = true;
-  updateStatus();
-
-  let userMove = source + target;
-  currentTaskResults.push({
-      task_id: positions[currentIndex].id,
-      is_correct: isCorrect,
-      user_move: userMove
-  });
-  let bestMove = positions[currentIndex].correct_move;
-  let isCorrect = (userMove === bestMove);
-
-  sessionSolved++;
-  if (isCorrect) {
-    sessionCorrect++;
-    $result.html("Dobrze! Najlepszy ruch: " + userMove);
-    $result.css("color", "green");
-  } else {
-    $result.html("Błąd. Najlepszy ruch to: " + bestMove);
-    $result.css("color", "red");
-  }
-
-  if (sessionSolved >= BATCH_SIZE) {
-  setTimeout(function () {
-    finishModule();
-  }, 500);
-} else {
-  $("#next-btn").show();   
-}
-}
-
-function onSnapEnd() {
-  board.position(game.fen());
-  removeHighlights();
-}
-
-function updateStatus() {
-  let status = "";
-  let moveColor = game.turn() === "w" ? "White" : "Black";
-
-  if (game.in_checkmate()) {
-    status = "Game over, " + moveColor + " is in checkmate.";
-  } else if (game.in_draw()) {
-    status = "Game over, drawn position";
-  } else {
-    status = moveColor + " to move";
-    if (game.in_check()) status += ", " + moveColor + " is in check";
-  }
-
-  $status.html(status);
-  $fen.html(game.fen());
-  $pgn.html(game.pgn());
-}
-
-// ======== DOCUMENT READY ========
-
-$(function () {
-  $status = $("#status");
-  $fen = $("#fen");
-  $pgn = $("#pgn");
-  $result = $("#result");
-
-  board = Chessboard("board", {
-    draggable: true,
-    position: "start",
-    pieceTheme: pieceTheme,
-    onDragStart: onDragStart,
-    onDrop: onDrop,
-    onSnapEnd: onSnapEnd,
-  });
-
-  $(window).on("resize", board.resize);
-
-});
-
-function showStats() {
-  // Obliczamy średnią
-  let avgTime = (sessionTotalTime / BATCH_SIZE).toFixed(2);
-
-  // Wysyłamy dane do bazy (views.py -> save_result)
-  fetch("/save-result/", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-CSRFToken": getCookie("csrftoken"),
-    },
-    body: JSON.stringify({
-      level: currentLevel,
-      score: sessionCorrect,
-      avg_time: avgTime
-    }),
-  })
-  .then(response => {
-      if (response.ok) {
-          // Gdy dane się zapiszą, idziemy na stronę wyników
-          window.location.href = "/results/";
-      } else {
-          alert("Błąd zapisu wyników!");
-      }
-  })
-  .catch(error => console.error('Error:', error));
-}
-
-
-// ======== NOWA LOGIKA MODUŁÓW ========
-
-let currentModuleId = null;
-
-// Funkcja wywoływana po kliknięciu w moduł na liście (w HTML)
-function openModule(moduleId, title) {
-    currentModuleId = moduleId;
-
-    // Pobieramy zadania dla tego konkretnego modułu z serwera
-    fetch(`/get-module-tasks/${moduleId}/`)
-        .then(response => response.json())
-        .then(data => {
-            // Podmieniamy listę zadań na te z bazy
-            positions = data.tasks;
-            totalTasks = positions.length;
-
-            // Przełączamy widoki
-            $("#module-list-view").hide(); // Ukrywamy tabelę
-            $("#game-view").show();        // Pokazujemy szachownicę
-            $("#active-title").text(title);
-
-            // Resetujemy stan sesji
-            currentIndex = 0;
-            sessionSolved = 0;
-            sessionCorrect = 0;
-            sessionTotalTime = 0;
-
-            board.resize();
-            loadTask(0);
-        })
-        .catch(err => console.error("Błąd pobierania zadań:", err));
-}
-
-function nextTask() {
-    $("#next-btn").hide();
-    currentIndex++;
-
-    if (currentIndex < totalTasks) {
-        loadTask(currentIndex);
-    } else {
-        // Jeśli to było ostatnie zadanie, wyślij wynik do bazy
-        finishModule();
+        document.getElementById("module-list-view").style.display = "none";
+        document.getElementById("game-view").style.display = "block";
+        document.getElementById("active-title").innerText = title;
+        
+        currentTaskIndex = 0;
+        loadTask();
+    } catch (err) {
+        alert(err.message);
     }
 }
 
-function finishModule() {
-    let avgTime = (sessionTotalTime / totalTasks).toFixed(2);
+function loadTask() {
+    const task = currentTasks[currentTaskIndex];
+    document.getElementById("task-counter").innerText = `Zadanie ${currentTaskIndex + 1} z ${currentTasks.length}`;
+    document.getElementById("result-message").innerText = "Twój ruch!";
+    document.getElementById("result-message").className = "text-dark fw-bold fs-5";
+    document.getElementById("next-btn").style.display = "none";
+    
+    game.load(task.fen);
+    
+    const config = {
+        draggable: true,
+        position: task.fen,
+        onDragStart: onDragStart,
+        onDrop: handleMove,
+        onSnapEnd: onSnapEnd,
+        pieceTheme: '/static/chess_app/img/chesspieces/wikipedia/{piece}.png'
+    };
+    
+    if (board) board.destroy();
+    board = Chessboard('board', config);
+}
 
-    fetch("/save-result/", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            "X-CSRFToken": getCookie("csrftoken"),
-        },
-        body: JSON.stringify({
-            module_id: currentModuleId,
-            score: sessionCorrect,
-            avg_time: avgTime,
-            tasks_data: currentTaskResults
-        }),
-    })
-    .then(response => {
-        if (response.ok) {
-            alert(`Ukończono moduł! Wynik: ${sessionCorrect}/${totalTasks}`);
-            location.reload();
-        } else {
-            alert("Błąd zapisu wyników!");
-        }
+function onDragStart(source, piece, position, orientation) {
+    // Prevent moving if game is over
+    if (game.game_over()) return false;
+
+    // Only allow player to move the pieces of the side whose turn it is
+    if ((game.turn() === 'w' && piece.search(/^b/) !== -1) ||
+        (game.turn() === 'b' && piece.search(/^w/) !== -1)) {
+        return false;
+    }
+
+    // Highlight legal moves
+    removeHighlights();
+    let moves = game.moves({ square: source, verbose: true });
+    if (moves.length === 0) return;
+
+    $('#board .square-' + source).addClass('highlight1-32417');
+    moves.forEach(move => {
+        let $sq = $('#board .square-' + move.to);
+        $sq.addClass('highlight1-32417');
+        if (move.captured) $sq.addClass('highlight-capture');
     });
 }
+
+async function handleMove(source, target) {
+    removeHighlights();
+    const task = currentTasks[currentTaskIndex];
+    
+    // Validate move via chess.js
+    const move = game.move({ from: source, to: target, promotion: 'q' });
+    if (move === null) return 'snapback';
+
+    const userMoveUCI = source + target; 
+    const correctMove = task.solution.trim().toLowerCase();
+    const isCorrect = (userMoveUCI === correctMove);
+
+    // Update UI Feedback
+    if (isCorrect) { 
+        document.getElementById("result-message").innerText = "Brawo! Prawidłowy ruch.";
+        document.getElementById("result-message").className = "text-success fw-bold fs-5";
+    } else {
+        document.getElementById("result-message").innerText = "Zły ruch! Poprawny to: " + task.solution;
+        document.getElementById("result-message").className = "text-danger fw-bold fs-5";
+    }
+
+    board.draggable = false; // Lock board
+    document.getElementById("next-btn").style.display = "inline-block";
+
+    // Async save to backend
+    try {
+        await fetch('/save-result/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                module_id: currentModuleId,
+                tasks_data: [{
+                    task_id: task.id,
+                    is_correct: isCorrect,
+                    user_move: userMoveUCI
+                }]
+            })
+        });
+    } catch (err) {
+        console.error("Błąd zapisu:", err);
+    }
+}
+
+function onSnapEnd() {
+    board.position(game.fen());
+}
+
+function nextTask() {
+    currentTaskIndex++;
+    if (currentTaskIndex < currentTasks.length) {
+        loadTask();
+    } else {
+        alert("Moduł ukończony!");
+        location.reload();
+    }
+}
+
+// Handle window resize for chessboard responsiveness
+$(window).on('resize', function() {
+    if (board) board.resize();
+});

@@ -252,6 +252,7 @@ def student_detail_view(request, user_id):
 def student_module_detail_view(request, user_id, module_id):
     student = get_object_or_404(User, id=user_id)
     module = get_object_or_404(Module, id=module_id)
+    student_module = get_object_or_404(StudentModule, student=student, module=module)
     # Wyniki każdego osobnego zadania
     task_results = (
         StudentTaskResult.objects.filter(student=student, module=module)
@@ -259,8 +260,24 @@ def student_module_detail_view(request, user_id, module_id):
         .order_by("timestamp")
     )
 
+    total_tasks_in_module = module.tasks.count()
+    tasks_attempted = task_results.count()
+    correct_tasks = task_results.filter(is_correct=True).count()
+
+    accuracy = (correct_tasks / tasks_attempted * 100) if tasks_attempted > 0 else 0
+
+    context = {
+        "student": student,
+        "module": module,
+        "student_module": student_module,
+        "task_results": task_results,
+        "total_tasks": total_tasks_in_module,
+        "tasks_attempted": tasks_attempted,
+        "accuracy": round(accuracy, 1),
+    }
+
     return render(
         request,
         "trainer/student_module_detail.html",
-        {"student": student, "module": module, "task_results": task_results},
+        context
     )
