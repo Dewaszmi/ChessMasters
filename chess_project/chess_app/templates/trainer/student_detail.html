@@ -1,36 +1,184 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-    <meta charset="UTF-8">
-    <title>Postępy: {{ student.username }}</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body class="bg-light p-5">
-    <div class="container">
-        <a href="{% url 'trainer_results' %}" class="btn btn-secondary mb-4">← Wróć do listy uczniów</a>
-        <h2>Uczeń: <span class="text-primary">{{ student.username }}</span></h2>
-        <p class="text-muted">Kliknij w moduł, aby zobaczyć szczegóły każdego zadania.</p>
+  <meta charset="utf-8">
+  <title>Postępy: {{ student.username }} | ChessMasters</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <style>
+      body {
+          background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+          min-height: 100vh;
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      }
+      .card {
+          border: none;
+          border-radius: 15px;
+          box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+          overflow: hidden;
+          background-color: white;
+          margin-bottom: 20px;
+      }
+      .card-header {
+          background-color: #2c3e50;
+          color: white;
+          padding: 15px 20px;
+          border-bottom: none;
+          font-weight: 600;
+          font-size: 1.1rem;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+      }
+      
+      .navbar-custom {
+          background-color: #2c3e50;
+          border-radius: 15px;
+          padding: 10px 20px;
+          box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+      }
+      .navbar-custom a {
+          color: rgba(255,255,255,0.8);
+          text-decoration: none;
+          margin-right: 15px;
+          font-weight: 500;
+          transition: color 0.2s;
+      }
+      .navbar-custom a:hover { color: #fff; }
+      .navbar-custom .separator { color: rgba(255,255,255,0.3); margin-right: 15px; }
 
-        <div class="row mt-4">
-            {% for mp in module_progress %}
-            <div class="col-md-6 mb-4">
-                <div class="card shadow-sm">
-                    <div class="card-body">
-                        <h5 class="card-title">{{ mp.module.title }}</h5>
-                        <div class="progress my-2" style="height: 10px;">
-                            <div class="progress-bar bg-success" style="width: {% widthratio mp.score mp.max_score 100 %}%"></div>
-                        </div>
-                        <div class="d-flex justify-content-between align-items-center mt-3">
-                            <span>Wynik: <strong>{{ mp.score }} / {{ mp.max_score }}</strong></span>
-                            <a href="{% url 'trainer_student_module_detail' student.id mp.module.id %}" class="btn btn-sm btn-outline-primary">Szczegóły zadań</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            {% empty %}
-            <div class="alert alert-info">Ten uczeń nie ukończył jeszcze żadnego modułu.</div>
-            {% endfor %}
+      .btn-primary {
+          background-color: #769656;
+          border-color: #769656;
+          font-weight: bold;
+          transition: all 0.3s;
+      }
+      .btn-primary:hover {
+          background-color: #5d7844;
+          border-color: #5d7844;
+      }
+      .btn-outline-chess {
+          color: #769656;
+          border-color: #769656;
+          font-weight: 600;
+      }
+      .btn-outline-chess:hover {
+          background-color: #769656;
+          color: white;
+      }
+
+      .progress {
+          height: 12px;
+          background-color: #e9ecef;
+          border-radius: 10px;
+      }
+      .progress-bar-chess {
+          background-color: #769656;
+          border-radius: 10px;
+      }
+  </style>
+</head>
+<body>
+
+<div class="container mt-5 pb-5">
+
+  <div class="navbar-custom d-flex align-items-center mb-4">
+    <h2 class="fw-bold m-0 me-auto" style="color: rgba(255,255,255); font-size: 3rem;">
+        Wyniki: {{ student.username }}
+    </h2>
+
+    <a href="{% url 'trainer_home' %}">Home</a>
+    <span class="separator">|</span>
+    <a href="{% url 'trainer_groups' %}">Grupy</a>
+    <span class="separator">|</span>
+    <a href="{% url 'trainer_results' %}">Wyniki</a>
+    
+    <span class="separator">|</span>
+    <a href="{% url 'logout' %}" style="color: #ff9999;">Wyloguj</a>
+  </div>
+
+  <div class="row mb-4">
+      <div class="col-12">
+          <div class="card">
+              <div class="card-body p-4 d-flex align-items-center justify-content-between">
+                  <div class="d-flex align-items-center">
+                      <div class="bg-light rounded-circle p-3 me-3 text-secondary shadow-sm">
+                          <i class="fa-solid fa-user-graduate fa-2x"></i>
+                      </div>
+                      <div>
+                          <h3 class="fw-bold text-dark m-0">{{ student.username }}</h3>
+                          <span class="text-muted small">
+                             <i class="fa-solid fa-envelope me-1"></i> {{ student.email|default:"Brak adresu e-mail" }}
+                          </span>
+                      </div>
+                  </div>
+                  
+                  <div class="text-end">
+                      <a href="{% url 'trainer_results' %}" class="btn btn-outline-secondary btn-sm">
+                          <i class="fa-solid fa-arrow-left me-1"></i> Wróć do listy
+                      </a>
+                  </div>
+              </div>
+          </div>
+      </div>
+  </div>
+
+  <p class="text-muted ms-1 mb-3 fw-bold small text-uppercase">
+      <i class="fa-solid fa-list-check me-1"></i> Postępy w modułach
+  </p>
+
+  <div class="row">
+    {% for mp in module_progress %}
+    <div class="col-12 col-md-6 col-xl-4 mb-4">
+      <div class="card h-100">
+        <div class="card-header">
+           <span>{{ mp.module.title }}</span>
+           {% if mp.score == mp.max_score and mp.max_score > 0 %}
+                <i class="fa-solid fa-trophy text-warning" title="Perfekcyjny wynik!"></i>
+           {% endif %}
+        </div>
+        <div class="card-body p-4">
+           
+           <div class="d-flex justify-content-between mb-1 small fw-bold text-muted">
+               <span>Postęp</span>
+               <span>{% widthratio mp.score mp.max_score 100 %}%</span>
+           </div>
+           <div class="progress mb-4 shadow-sm">
+               <div class="progress-bar progress-bar-chess" role="progressbar" 
+                    style="width: {% widthratio mp.score mp.max_score 100 %}%">
+               </div>
+           </div>
+
+           <div class="d-flex justify-content-between align-items-end border-top pt-3">
+               <div>
+                   <div class="small text-muted text-uppercase fw-bold">Wynik</div>
+                   <div class="fs-4 fw-bold text-dark">
+                       {{ mp.score }} <span class="text-muted fs-6">/ {{ mp.max_score }}</span>
+                   </div>
+               </div>
+               
+               <a href="{% url 'trainer_student_module_detail' student.id mp.module.id %}" class="btn btn-sm btn-primary px-3 shadow-sm">
+                   Szczegóły <i class="fa-solid fa-angle-right ms-1"></i>
+               </a>
+           </div>
+
+        </div>
+      </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="alert alert-light border shadow-sm text-center py-5">
+            <i class="fa-solid fa-clipboard-question fa-3x text-muted mb-3 opacity-50"></i>
+            <h5 class="text-muted">Ten uczeń nie ukończył jeszcze żadnego modułu.</h5>
+            <p class="small text-muted">Przypisz mu moduł w zakładce "Home".</p>
         </div>
     </div>
+    {% endfor %}
+  </div>
+
+</div>
+
 </body>
 </html>
