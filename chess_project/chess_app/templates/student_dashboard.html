@@ -2,84 +2,254 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-    <meta charset="utf-8" />
-    <title>Student – Szachownica</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
-    <style>
-        body { font-family: Arial, sans-serif; background: #f4f4f4; padding: 40px; }
-        #board-container { margin: 20px auto; padding: 15px; background: #2c3e50; border-radius: 10px; width: fit-content; }
-        #board { width: 450px; max-width: 90vw; }
-        .card { border: none; border-radius: 12px; }
-        .status-dot { height: 10px; width: 10px; border-radius: 50%; display: inline-block; }
-    </style>
+  <meta charset="utf-8" />
+  <title>Student – Szachownica | ChessMasters</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="{% static 'chess_app/lib/chessboard.css' %}">
+  
+  <style>
+      /* --- STYLE WSPÓLNE --- */
+      body {
+          background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+          min-height: 100vh;
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      }
+      .card {
+          border: none;
+          border-radius: 15px;
+          box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+          overflow: hidden;
+          background-color: white;
+          margin-bottom: 20px;
+      }
+      .card-header {
+          background-color: #2c3e50;
+          color: white;
+          padding: 15px 20px;
+          border-bottom: none;
+          font-weight: 600;
+          font-size: 1.1rem;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+      }
+
+      /* Navbar */
+      .navbar-custom {
+          background-color: #2c3e50;
+          border-radius: 15px;
+          padding: 10px 20px;
+          box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+      }
+      .navbar-custom a {
+          color: rgba(255,255,255,0.8);
+          text-decoration: none;
+          margin-right: 15px;
+          font-weight: 500;
+          transition: color 0.2s;
+      }
+      .navbar-custom a:hover { color: #fff; }
+      .navbar-custom .separator { color: rgba(255,255,255,0.3); margin-right: 15px; }
+
+      /* Przyciski */
+      .btn-primary {
+          background-color: #769656;
+          border-color: #769656;
+          font-weight: bold;
+          transition: all 0.3s;
+          color: white;
+      }
+      .btn-primary:hover {
+          background-color: #5d7844;
+          border-color: #5d7844;
+          color: white;
+      }
+
+      /* --- NOWE STYLE DLA IKON I STATUSÓW --- */
+      
+      /* 1. Idealnie wyśrodkowana ikona modułu */
+      .module-icon {
+          width: 45px;       /* Stała szerokość */
+          height: 45px;      /* Stała wysokość */
+          display: flex;     /* Flexbox do centrowania */
+          align-items: center;
+          justify-content: center;
+          background-color: #f8f9fa; /* Bardzo jasne tło */
+          color: #2c3e50;            /* Ciemny kolor ikony */
+          border-radius: 12px;       /* Ładne zaokrąglenie */
+          transition: all 0.3s ease;
+          border: 1px solid #e9ecef; /* Delikatna ramka */
+      }
+      
+      /* Efekt najechania na wiersz - ikona robi się zielona */
+      .table-hover tbody tr:hover .module-icon {
+          background-color: #f0fdf4; /* Jasnozielone tło */
+          color: #769656;            /* Zielona ikona */
+          border-color: #769656;
+      }
+
+      /* 2. Nowy styl dla statusu "Do zrobienia" (zamiast żółtego) */
+      .badge-todo {
+          background-color: #f1f3f5; /* Jasny szary */
+          color: #495057;            /* Ciemny grafitowy tekst */
+          border: 1px solid #dee2e6; /* Subtelna ramka */
+          font-weight: 600;
+          padding: 8px 12px;         /* Trochę więcej oddechu */
+      }
+      
+      /* Styl dla statusu "Ukończono" (żeby pasował wielkością) */
+      .badge-done {
+          padding: 8px 12px;
+      }
+
+      /* Specyficzne dla widoku gry */
+      #board-container { 
+          margin: 20px auto; 
+          padding: 15px; 
+          background: #2c3e50; 
+          border-radius: 10px; 
+          width: fit-content; 
+          box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+      }
+      #board { 
+          width: 450px; 
+          max-width: 85vw; 
+      }
+  </style>
 </head>
 <body>
 
-<div class="container mt-5">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h2 class="mb-0">Twoje zadania</h2>
-            <p class="text-muted">Witaj, <strong>{{ user.username }}</strong>! Powodzenia w treningu.</p>
-        </div>
-        <div>
-            <a href="{% url 'results' %}" class="btn btn-primary me-2">📊 Moje Statystyki</a>
-            <a href="{% url 'logout' %}" class="btn btn-outline-danger btn-sm">Wyloguj</a>
-        </div>
-    </div>
+<div class="container mt-5 pb-5">
 
-    <div id="module-list-view" class="card shadow-sm">
-        <table class="table table-hover align-middle mb-0">
-            <thead class="table-light">
-                <tr>
-                    <th class="ps-4">Moduł</th>
-                    <th>Data przypisania</th>
-                    <th class="text-end px-4">Wynik / Status</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for mod in modules %}
-                <tr>
-                    <td class="ps-4">
-                        <a href="javascript:void(0)" onclick="openModule({{ mod.id }}, '{{ mod.title }}')" class="text-decoration-none fw-bold">
-                            ▤ {{ mod.title }}
-                        </a>
-                    </td>
-                    <td class="text-muted">{{ mod.date }}</td>
-                    <td class="text-end px-4">
-                        <span class="fw-bold">{{ mod.score }}</span>
-                        <span class="status-dot ms-2 {% if mod.is_completed %}bg-primary{% else %}bg-secondary{% endif %}"></span>
-                    </td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="3" class="text-center py-4 text-muted">Brak przypisanych modułów.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+  <div class="navbar-custom d-flex align-items-center mb-4">
+    <h2 class="fw-bold m-0 me-auto" style="color: rgba(255,255,255); font-size: 3rem;">
+        Panel Studenta
+    </h2>
+    
+    <a href="{% url 'results' %}">Statystyki</a>
+    <span class="separator">|</span>
+    <a href="{% url 'logout' %}" style="color: #ff9999;">Wyloguj</a>
+  </div>
 
-    <div id="game-view" style="display: none;">
-        <button class="btn btn-secondary mb-3" onclick="location.reload()">← Wróć do listy</button>
-        <h3 id="active-title"></h3>
-        <p id="task-counter" class="text-muted"></p>
+  <div id="module-list-view">
+      
+      <div class="card mb-4">
+          <div class="card-body p-4 d-flex align-items-center">
+              <div class="bg-light rounded-circle p-3 me-3 text-secondary border">
+                  <i class="fa-solid fa-graduation-cap fa-2x"></i>
+              </div>
+              <div>
+                  <h4 class="mb-1 fw-bold text-dark">Witaj w centrum treningowym, <strong>{{ user.username }}</strong>!</h4>
+                  <p class="text-muted mb-0 small">Wybierz moduł z listy poniżej, aby rozpocząć rozwiązywanie zadań.</p>
+              </div>
+          </div>
+      </div>
 
-        <div id="board-container">
-            <div id="board"></div>
+      <div class="card">
+        <div class="card-header">
+           <span><i class="fa-solid fa-layer-group me-2"></i> Twoje Moduły</span>
         </div>
-
-        <div class="mt-4 text-center">
-            <p id="result-message" class="fw-bold fs-5"></p>
-            <button id="next-btn" class="btn btn-success btn-lg" style="display:none;" onclick="nextTask()">Następne zadanie ▶</button>
+        <div class="card-body p-0">
+           <div class="table-responsive">
+             <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-4">Nazwa Modułu</th>
+                        <th>Data przypisania</th>
+                        <th class="text-end pe-4">Status / Wynik</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for mod in modules %}
+                    <tr style="cursor: pointer;" onclick="openModule({{ mod.id }}, '{{ mod.title }}')">
+                        <td class="ps-4">
+                            <div class="d-flex align-items-center">
+                                <div class="module-icon me-3">
+                                    <i class="fa-solid fa-chess-board fs-5"></i>
+                                </div>
+                                
+                                <div>
+                                    <div class="fw-bold text-dark">{{ mod.title }}</div>
+                                    <div class="small text-muted">Kliknij, aby rozpocząć</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="text-muted small">
+                            <i class="fa-regular fa-calendar me-1"></i> {{ mod.date }}
+                        </td>
+                        <td class="text-end pe-4">
+                            {% if mod.is_completed %}
+                                <span class="me-3 fw-bold text-success">{{ mod.score }} pkt</span>
+                                <span class="badge bg-success rounded-pill badge-done">
+                                    <i class="fa-solid fa-check me-1"></i> Ukończono
+                                </span>
+                            {% else %}
+                                <span class="me-3 text-muted">—</span>
+                                <span class="badge badge-todo rounded-pill">
+                                    <i class="fa-solid fa-play me-1 text-secondary opacity-50"></i> Do zrobienia
+                                </span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3" class="text-center py-5 text-muted">
+                            <i class="fa-solid fa-box-open fa-3x mb-3 opacity-50"></i><br>
+                            Brak przypisanych modułów. Poproś trenera o zadania!
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+             </table>
+           </div>
         </div>
-    </div>
+      </div>
+  </div>
+
+  <div id="game-view" style="display: none;">
+      <div class="row justify-content-center">
+          <div class="col-lg-8 col-xl-7">
+              
+              <div class="card">
+                  <div class="card-header py-3">
+                      <div class="d-flex align-items-center">
+                          <button class="btn btn-sm btn-outline-light me-3" onclick="location.reload()" title="Wróć do listy">
+                              <i class="fa-solid fa-arrow-left"></i> Wróć
+                          </button>
+                          <h5 class="mb-0 m-0 text-truncate" id="active-title" style="max-width: 300px;">Tytuł modułu</h5>
+                      </div>
+                      <span id="task-counter" class="badge bg-white text-dark">Zadanie 1 / X</span>
+                  </div>
+                  
+                  <div class="card-body p-4 text-center bg-light">
+                      
+                      <div id="board-container">
+                          <div id="board"></div>
+                      </div>
+
+                      <div class="mt-4" style="min-height: 60px;">
+                          <p id="result-message" class="fw-bold fs-5 mb-3"></p>
+                          <button id="next-btn" class="btn btn-primary btn-lg px-5 shadow-sm" style="display:none;" onclick="nextTask()">
+                              Następne zadanie <i class="fa-solid fa-forward ms-2"></i>
+                          </button>
+                      </div>
+                      
+                      <p class="text-muted small mt-3 mb-0">
+                          <i class="fa-regular fa-lightbulb me-1"></i> Wykonaj ruch na szachownicy, aby rozwiązać zadanie.
+                      </p>
+                  </div>
+              </div>
+
+          </div>
+      </div>
+  </div>
+
 </div>
 
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
-
+<script src="{% static 'chess_app/lib/jquery-3.7.1.min.js' %}"></script>
+<script src="{% static 'chess_app/lib/chess.min.js' %}"></script>
+<script src="{% static 'chess_app/lib/chessboard.js' %}"></script>
 <script src="{% static 'chess_app/js/student.js' %}"></script>
 
 </body>
