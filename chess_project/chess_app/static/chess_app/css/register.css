@@ -1,0 +1,47 @@
+
+body {
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px 0;
+}
+.card {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+.card-header {
+    background-color: #2c3e50;
+    color: white;
+    text-align: center;
+    padding: 25px;
+}
+.btn-success {
+    background-color: #769656;
+    border-color: #769656;
+    padding: 10px;
+    font-weight: bold;
+}
+.btn-success:hover {
+    background-color: #5d7844;
+    border-color: #5d7844;
+}
+.form-label {
+    font-weight: 500;
+    color: #555;
+    margin-top: 5px;
+}
+.reg-icon {
+    font-size: 3rem;
+    display: block;
+    margin-bottom: 10px;
+}
+.helptext {
+    font-size: 0.8em;
+    color: #888;
+    display: block;
+    margin-top: 2px;
+}

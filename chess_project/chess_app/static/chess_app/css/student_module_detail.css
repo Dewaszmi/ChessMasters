@@ -1,0 +1,78 @@
+body {
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    min-height: 100vh;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+.card {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    overflow: hidden;
+    background-color: white;
+    margin-bottom: 20px;
+}
+.card-header {
+    background-color: #2c3e50;
+    color: white;
+    padding: 15px 20px;
+    border-bottom: none;
+    font-weight: 600;
+    font-size: 1.1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.navbar-custom {
+    background-color: #2c3e50;
+    border-radius: 15px;
+    padding: 10px 20px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+.navbar-custom a {
+    color: rgba(255,255,255,0.8);
+    text-decoration: none;
+    margin-right: 15px;
+    font-weight: 500;
+    transition: color 0.2s;
+}
+.navbar-custom a:hover { color: #fff; }
+.navbar-custom .separator { color: rgba(255,255,255,0.3); margin-right: 15px; }
+
+.btn-primary {
+    background-color: #769656;
+    border-color: #769656;
+    font-weight: bold;
+    transition: all 0.3s;
+    color: white;
+}
+.btn-primary:hover {
+    background-color: #5d7844;
+    border-color: #5d7844;
+    color: white;
+}
+.btn-outline-primary {
+    color: #769656;
+    border-color: #769656;
+}
+.btn-outline-primary:hover {
+    background-color: #769656;
+    color: white;
+    border-color: #769656;
+}
+
+.table-hover tbody tr:hover {
+    background-color: #f8fcf6;
+}
+.board-container {
+    width: 250px;
+    display: block;
+    margin: 0 auto;
+}
+.stat-card-icon {
+    font-size: 2rem;
+    opacity: 0.2;
+    position: absolute;
+    right: 20px;
+    bottom: 20px;
+}

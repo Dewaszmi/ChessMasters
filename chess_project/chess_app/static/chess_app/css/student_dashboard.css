@@ -1,0 +1,97 @@
+body {
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    min-height: 100vh;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+.card {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    overflow: hidden;
+    background-color: white;
+    margin-bottom: 20px;
+}
+.card-header {
+    background-color: #2c3e50;
+    color: white;
+    padding: 15px 20px;
+    border-bottom: none;
+    font-weight: 600;
+    font-size: 1.1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.navbar-custom {
+    background-color: #2c3e50;
+    border-radius: 15px;
+    padding: 10px 20px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+.navbar-custom a {
+    color: rgba(255,255,255,0.8);
+    text-decoration: none;
+    margin-right: 15px;
+    font-weight: 500;
+    transition: color 0.2s;
+}
+.navbar-custom a:hover { color: #fff; }
+.navbar-custom .separator { color: rgba(255,255,255,0.3); margin-right: 15px; }
+
+.btn-primary {
+    background-color: #769656;
+    border-color: #769656;
+    font-weight: bold;
+    transition: all 0.3s;
+    color: white;
+}
+.btn-primary:hover {
+    background-color: #5d7844;
+    border-color: #5d7844;
+    color: white;
+}
+
+.module-icon {
+    width: 45px;
+    height: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #f8f9fa;
+    color: #2c3e50;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    border: 1px solid #e9ecef;
+}
+
+.table-hover tbody tr:hover .module-icon {
+    background-color: #f0fdf4;
+    color: #769656;
+    border-color: #769656;
+}
+
+.badge-todo {
+    background-color: #f1f3f5;
+    color: #495057;
+    border: 1px solid #dee2e6;
+    font-weight: 600;
+    padding: 8px 12px;
+}
+
+.badge-done {
+    padding: 8px 12px;
+}
+
+#board-container { 
+    margin: 20px auto; 
+    padding: 15px; 
+    background: #2c3e50; 
+    border-radius: 10px; 
+    width: fit-content; 
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+#board { 
+    width: 450px; 
+    max-width: 85vw; 
+}

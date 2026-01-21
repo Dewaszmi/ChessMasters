@@ -8,7 +8,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
     <style>
-        /* --- STYLE ZGODNE Z DASHBOARDEM --- */
         body {
             background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
             min-height: 100vh;
@@ -43,7 +42,6 @@
             box-shadow: 0 5px 15px rgba(0,0,0,0.1);
         }
 
-        /* --- DYNAMICZNY WYKRES KOŁOWY --- */
         .stat-card {
             transition: transform 0.2s;
         }
@@ -62,26 +60,23 @@
             font-size: 2em;
             margin: 0 auto;
             position: relative;
-            /* Dynamiczny gradient tworzący wykres: zmienne --p i --c są ustawiane w HTML */
             background: conic-gradient(var(--c) var(--p), #e9ecef 0);
             box-shadow: inset 0 0 10px rgba(0,0,0,0.05);
         }
         
-        /* Biała "zaślepka" w środku tworząca pierścień */
         .accuracy-circle::after {
             content: "";
             position: absolute;
-            width: 110px;  /* Grubość pierścienia = (140 - 110) / 2 = 15px */
+            width: 110px;
             height: 110px;
             background: white;
             border-radius: 50%;
             z-index: 1;
         }
 
-        /* Tekst wyniku nad zaślepką */
         .accuracy-circle span {
             z-index: 2;
-            color: var(--c); /* Tekst w kolorze wykresu */
+            color: var(--c);
         }
 
         .icon-bg {
