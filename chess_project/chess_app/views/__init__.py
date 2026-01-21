@@ -1,3 +1,3 @@
-from . import ajax, auth, student, trainer
+from . import auth, student, trainer
 
-__all__ = ["auth", "trainer", "student", "ajax"]
+__all__ = ["auth", "trainer", "student"]

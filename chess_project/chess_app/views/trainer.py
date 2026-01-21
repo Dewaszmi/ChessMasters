@@ -66,9 +66,7 @@ def trainer_groups(request):
     # dopisz “pola” na obiektach studentów (template wtedy używa s.my_group itd.)
     for s in students:
         s.current_group = s.student_group.all().order_by("id").first()  # dowolny trener
-        s.my_trainer_group = (
-            s.student_group.filter(trainer=request.user).order_by("id").first()
-        )
+        s.my_trainer_group = s.student_group.filter(trainer=request.user).order_by("id").first()
         # zablokuj przypisanie, jeśli student jest w grupie innego trenera
         s.locked_by_other = s.student_group.exclude(trainer=request.user).exists()
 
@@ -86,11 +84,7 @@ def trainer_groups(request):
 def trainer_results(request):
     search_query = request.GET.get("search", "")
 
-    students = (
-        User.objects.filter(student_group__trainer=request.user)
-        .distinct()
-        .order_by("username")
-    )
+    students = User.objects.filter(student_group__trainer=request.user).distinct().order_by("username")
 
     if search_query:
         students = students.filter(username__icontains=search_query)
@@ -105,35 +99,48 @@ def trainer_results(request):
 @require_POST
 @trainer_required
 def ajax_create_group(request):
-    data = json.loads(request.body or "{}")
-    name = (data.get("name") or "").strip()
+    try:
+        data = json.loads(request.body or "{}")
+        name = (data.get("name") or "").strip()
+        if not name:
+            return JsonResponse({"error": "Pusta nazwa grupy"}, status=400)
 
-    if not name:
-        return JsonResponse({"error": "empty name"}, status=400)
-
-    group = Group.objects.create(name=name, trainer=request.user)
-    return JsonResponse({"id": group.id, "name": group.name})
+        group = Group.objects.create(name=name, trainer=request.user)
+        return JsonResponse({"id": group.id, "name": group.name})
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
 
 
 @require_POST
 @trainer_required
 def ajax_assign_student(request):
-    data = json.loads(request.body or "{}")
-    student_id = data.get("student_id")
-    group_id = data.get("group_id")
+    try:
+        data = json.loads(request.body or "{}")
+        student_id = data.get("student_id")
+        group_id = data.get("group_id")  # Can be an ID or null
 
-    if not student_id or not group_id:
-        return JsonResponse({"error": "missing student_id/group_id"}, status=400)
+        if not student_id:
+            return JsonResponse({"error": "Brak ID studenta"}, status=400)
 
-    student = get_object_or_404(User, id=student_id)
-    group = get_object_or_404(Group, id=group_id, trainer=request.user)
+        student = get_object_or_404(User, id=student_id)
 
-    for g in Group.objects.filter(students=student):
-        g.students.remove(student)
+        # 1. Clear student from any groups owned by THIS trainer
+        my_groups = Group.objects.filter(trainer=request.user)
+        for g in my_groups:
+            g.students.remove(student)
 
-    group.students.add(student)
+        # 2. If a group_id was provided (and isn't null), add them to that group
+        if group_id:
+            try:
+                group = Group.objects.get(id=group_id, trainer=request.user)
+                group.students.add(student)
+                return JsonResponse({"status": "ok", "message": "Przypisano do grupy"})
+            except (Group.DoesNotExist, ValueError):
+                return JsonResponse({"error": "Nieprawidłowa grupa"}, status=400)
 
-    return JsonResponse({"status": "ok"})
+        return JsonResponse({"status": "ok", "message": "Usunięto z grupy"})
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
 
 
 @trainer_required
@@ -147,12 +154,8 @@ def trainer_module_add(request):
             task_form = TaskForm(request.POST)
             if task_form.is_valid():
                 task = task_form.save()
-                messages.success(
-                    request, f"Dodano nowe zadanie: Task {task.id} ({task.level})"
-                )
-                return redirect(
-                    "trainer_module_add"
-                )  # Odśwież, by zadanie pojawiło się na liście
+                messages.success(request, f"Dodano nowe zadanie: Task {task.id} ({task.level})")
+                return redirect("trainer_module_add")  # Odśwież, by zadanie pojawiło się na liście
 
         elif "create_module" in request.POST:
             module_form = ModuleForm(request.POST)
@@ -199,10 +202,6 @@ def trainer_module_assign(request):
     datatuple = []
     subject = f"ChessMasters: Nowy moduł zadań - {module.title}"
 
-    # Instead of filtering students, filter the Profiles associated with that group
-    # This is much cleaner for the ORM to handle
-
-    # BUG: NIE DZIALA
     students_with_emails = (
         Profile.objects.filter(user__student_group=group, email__isnull=False)
         .exclude(email="")
@@ -218,9 +217,7 @@ def trainer_module_assign(request):
             f"Powodzenia!"
         )
 
-        datatuple.append(
-            (subject, message, settings.DEFAULT_FROM_EMAIL, [recipient_email])
-        )
+        datatuple.append((subject, message, settings.DEFAULT_FROM_EMAIL, [recipient_email]))
 
     if datatuple:
         send_mass_mail(tuple(datatuple), fail_silently=True)
@@ -237,9 +234,7 @@ def trainer_module_assign(request):
 def student_detail_view(request, user_id):
     student = get_object_or_404(User, id=user_id)
     # Pobieramy postępy w modułach dla tego ucznia
-    module_progress = StudentModule.objects.filter(student=student).select_related(
-        "module"
-    )
+    module_progress = StudentModule.objects.filter(student=student).select_related("module")
 
     return render(
         request,
@@ -276,8 +271,4 @@ def student_module_detail_view(request, user_id, module_id):
         "accuracy": round(accuracy, 1),
     }
 
-    return render(
-        request,
-        "trainer/student_module_detail.html",
-        context
-    )
+    return render(request, "trainer/student_module_detail.html", context)

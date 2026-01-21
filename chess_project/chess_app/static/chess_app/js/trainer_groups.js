@@ -39,38 +39,62 @@ async function createGroup() {
 
 
 async function assignStudent(studentId, btn) {
-    const row = btn.closest("tr");
-    const select = row.querySelector(".group-select");
-    const groupId = select.value;
-    const groupName = select.options[select.selectedIndex].text;
+  const row = btn.closest("tr");
+  const select = row.querySelector(".group-select");
+  const groupId = select.value;
+  const groupName = select.options[select.selectedIndex].text;
 
-    if (!groupId) return alert("Wybierz grupę z listy!");
+  if (!groupId) return alert("Wybierz grupę z listy!");
 
-    try {
-        const res = await fetch(window.AJAX_ASSIGN_STUDENT_URL, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "X-CSRFToken": csrftoken,
-            },
-            body: JSON.stringify({ student_id: studentId, group_id: groupId }),
-        });
+  try {
+    const res = await fetch(window.AJAX_ASSIGN_STUDENT_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": csrftoken,
+      },
+      body: JSON.stringify({ student_id: studentId, group_id: groupId }),
+    });
 
-        //const data = await res.json();
+    //const data = await res.json();
 
-        if (res.ok) {
-            // Sukces: aktualizujemy tekst w kolumnie "Obecna Grupa"
-            // const currentGroupCell = row.querySelector(".current-group");
-            // currentGroupCell.innerHTML = `<span class="badge bg-info text-dark">${data.group_name}</span>`;
-            alert("Przypisano studenta!");
-            // TODO: Z JAKIEGOS POWODU SIE NIE PRZELADOWUJE I BRZYDKO WYGLADA
-            window.location.reload()
-        } else {
-            const data = await res.json
-            alert("Błąd: " + (data.error || "Nieznany błąd"));
-        }
-    } catch (error) {
-        console.error("Błąd sieci:", error);
-        alert("Błąd połączenia z serwerem.");
+    if (res.ok) {
+      // Sukces: aktualizujemy tekst w kolumnie "Obecna Grupa"
+      // const currentGroupCell = row.querySelector(".current-group");
+      // currentGroupCell.innerHTML = `<span class="badge bg-info text-dark">${data.group_name}</span>`;
+      alert("Przypisano studenta!");
+      window.location.reload()
+    } else {
+      const data = await res.json()
+      alert("Błąd: " + (data.error || "Nieznany błąd"));
     }
+  } catch (error) {
+    console.error("Błąd sieci:", error);
+    alert("Błąd połączenia z serwerem.");
+  }
+}
+
+function removeStudentFromGroup(studentId) {
+  if (!confirm("Czy na pewno chcesz usunąć tego ucznia ze swojej grupy?")) return;
+
+  fetch(window.AJAX_ASSIGN_STUDENT_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-CSRFToken": getCookie("csrftoken"),
+    },
+    body: JSON.stringify({
+      student_id: studentId,
+      group_id: null // We send a flag to signify removal
+    }),
+  })
+    .then(response => response.json())
+    .then(data => {
+      if (data.status === "ok") {
+        location.reload();
+      } else {
+        alert("Błąd: " + data.error);
+      }
+    })
+    .catch(err => console.error("Error:", err));
 }

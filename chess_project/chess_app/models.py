@@ -53,9 +53,7 @@ class Task(models.Model):
 
 class Group(models.Model):
     name = models.CharField(max_length=100)
-    trainer = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="trainer_groups"
-    )
+    trainer = models.ForeignKey(User, on_delete=models.CASCADE, related_name="trainer_groups")
     students = models.ManyToManyField(User, blank=True, related_name="student_group")
 
     def __str__(self):
@@ -63,9 +61,7 @@ class Group(models.Model):
 
 
 class Module(models.Model):
-    title = models.CharField(
-        max_length=100
-    )  # Nazwa widoczna na liście, np. "Module 1 Knowledge Check"
+    title = models.CharField(max_length=100)  # Nazwa widoczna na liście, np. "Module 1 Knowledge Check"
     tasks = models.ManyToManyField(Task)  # Zadania przypisane do tego modułu
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -95,4 +91,3 @@ class StudentTaskResult(models.Model):
 
     def __str__(self):
         return f"{self.student.username} - {self.task} - {'OK' if self.is_correct else 'FAIL'}"
-

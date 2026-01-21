@@ -168,8 +168,13 @@
 
                         <td class="current-group">
                             {% if s.my_trainer_group %}
-                                <span class="badge badge-group badge-my-group rounded-pill">
-                                    <i class="fa-solid fa-check"></i> {{ s.my_trainer_group.name }}
+                                <span class="badge badge-group badge-my-group rounded-pill d-inline-flex align-items-center">
+                                    <i class="fa-solid fa-check me-1"></i> {{ s.my_trainer_group.name }}
+                                    <button class="btn btn-sm p-0 ms-2 text-danger border-0 bg-transparent" 
+                                            onclick="removeStudentFromGroup({{ s.id }})" 
+                                            title="Usuń z grupy">
+                                        <i class="fa-solid fa-circle-xmark"></i>
+                                    </button>
                                 </span>
                             {% else %}
                                 <span class="text-muted small">—</span>
